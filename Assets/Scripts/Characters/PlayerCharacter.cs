@@ -1,5 +1,7 @@
-using UnityEngine;
+using System;
 using System.Collections.Generic;
+using Unity.Netcode;
+using UnityEngine;
 
 public class PlayerCharacter : CharacterBase
 {
@@ -15,14 +17,23 @@ public class PlayerCharacter : CharacterBase
 
     private bool inputEnabled = false;
 
+    // HP sincronizado
+    public NetworkVariable<int> netHealth = new NetworkVariable<int>();
+
     protected override void Awake()
     {
         base.Awake();
 
         ApplyRoleData();
-        // Asignar referencia de PlayerCharacter al EquipmentManager
+
         if (equipmentManager != null)
             equipmentManager.player = this;
+    }
+
+    private void Start()
+    {
+        if (IsServer)
+            netHealth.Value = currentHealth;
     }
 
     private void ApplyRoleData()
@@ -56,6 +67,25 @@ public class PlayerCharacter : CharacterBase
     public void EndTurn()
     {
         inputEnabled = false;
-        GameManager.Instance.turnManager.EndTurn();
+        GameManager.Instance.turnManager.EndTurnServer();
+    }
+
+    // ------------------ COMBATE ------------------
+
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
+    // [ServerRpc(RequireOwnership = false)]
+    public void TakeDamageServerRpc(int amount)
+    {
+        if (!isAlive) return;
+
+        currentHealth -= amount;
+        netHealth.Value = currentHealth;
+
+        if (currentHealth <= 0)
+        {
+            currentHealth = 0;
+            isAlive = false;
+            Debug.Log($"{name} ha muerto");
+        }
     }
 }

@@ -17,6 +17,9 @@ public class Ability : ScriptableObject
     [TextArea(3, 5)]
     public string description;
 
+    [Header("Chances")]
+    public float hitChance;
+
     [Header("Cost")]
     public int energyCost;
 
@@ -27,8 +30,17 @@ public class Ability : ScriptableObject
     public int basePower;
 
     [Header("Status Effects")]
-    public List<StatusEffect> statusEffects;
+    public StatusEffect statusEffect;
 
     [Header("Targeting")]
     public bool targetSelf;
+
+    public int RollDamage()
+    {
+        int damage;
+
+        damage = basePower + statusEffect.value / 2;
+
+        return damage;
+    }
 }

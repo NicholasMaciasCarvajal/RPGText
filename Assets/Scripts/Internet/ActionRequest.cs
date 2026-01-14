@@ -1,16 +1,17 @@
-using UnityEngine;
-
-public class ActionRequest : MonoBehaviour
+public enum ActionType
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        
-    }
+    Ability,
+    Item
+}
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+[System.Serializable]
+public class ActionRequest
+{
+    public ulong playerNetworkId;
+    public ActionType actionType;
+
+    public int abilityIndex;
+    public int itemIndex;
+
+    public ulong targetNetworkId;
 }

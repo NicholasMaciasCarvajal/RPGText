@@ -49,11 +49,11 @@ public class GameManager : MonoBehaviour
         switch (newState)
         {
             case GameState.Narrative:
-                narrativeManager?.StartNarrative();
+                // narrativeManager?.StartNarrative();
                 break;
 
             case GameState.Combat:
-                battleManager?.StartBattle();
+                // battleManager?.StartBattle();
                 break;
 
             case GameState.Pause:

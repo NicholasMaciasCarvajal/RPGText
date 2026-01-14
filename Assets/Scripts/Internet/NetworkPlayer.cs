@@ -1,16 +1,23 @@
+using System.Globalization;
+using Unity.Netcode;
 using UnityEngine;
 
-public class NetworkPlayer : MonoBehaviour
+public class NetworkPlayer : NetworkBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    public PlayerCharacter linkedCharacter;   // referencia local a tu PlayerCharacter
+    public PlayerTurnController turnController;
+
+    private void Awake()
     {
-        
+        linkedCharacter = GetComponent<PlayerCharacter>();
+        turnController = GetComponent<PlayerTurnController>();
     }
 
-    // Update is called once per frame
-    void Update()
+    public override void OnNetworkSpawn()
     {
-        
+        if (IsOwner)
+        {
+            Debug.Log("Soy el dueño de este NetworkPlayer");
+        }
     }
 }

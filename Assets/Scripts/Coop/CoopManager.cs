@@ -1,6 +1,7 @@
+using Unity.Netcode;
 using UnityEngine;
 
-public class CoopManager : MonoBehaviour
+public class CoopManager : NetworkBehaviour
 {
     public static CoopManager Instance;
 
@@ -22,43 +23,6 @@ public class CoopManager : MonoBehaviour
         Instance = this;
     }
 
-    private void Start()
-    {
-        StartNextTurn();
-    }
-
-    public void StartNextTurn()
-    {
-        if (allowJointActions)
-        {
-            player1.EnableInput(true);
-            player2.EnableInput(true);
-        }
-        else
-        {
-            // Solo el jugador cuyo turno es activo puede actuar
-            TurnManager.TurnOwner current = GameManager.Instance.turnManager.CurrentTurn;
-
-            switch (current)
-            {
-                case TurnManager.TurnOwner.Player1:
-                    player1.EnableInput(true);
-                    player2.EnableInput(false);
-                    break;
-
-                case TurnManager.TurnOwner.Player2:
-                    player1.EnableInput(false);
-                    player2.EnableInput(true);
-                    break;
-
-                case TurnManager.TurnOwner.Enemies:
-                    player1.EnableInput(false);
-                    player2.EnableInput(false);
-                    break;
-            }
-        }
-    }
-
     public void EndCurrentPlayerTurn(PlayerCharacter player)
     {
         player.EnableInput(false);
@@ -66,9 +30,8 @@ public class CoopManager : MonoBehaviour
         if (!allowJointActions)
         {
             // Avanzar turno en TurnManager
-            GameManager.Instance.turnManager.EndTurn();
+            GameManager.Instance.turnManager.EndTurnServer();
             // Activar input del siguiente jugador
-            StartNextTurn();
         }
         else
         {
@@ -76,16 +39,4 @@ public class CoopManager : MonoBehaviour
             Debug.Log($"{player.name} terminó su acción (modo conjunto).");
         }
     }
-
-    /*
-    [PunRPC]
-    void RPC_UseAbility(int abilityIndex, int targetId)
-    {
-        // Ejecuta la habilidad en todos los clientes
-        Ability ability = player.abilities[abilityIndex];
-        CharacterBase target = BattleManager.Instance.GetCharacterById(targetId);
-        AbilityExecutor.ExecuteAbility(player, target, ability);
-    }
-    Para multijugador Online concepto para photon
-    */
 }

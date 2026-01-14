@@ -1,7 +1,8 @@
 using UnityEngine;
 using System.Collections.Generic;
+using Unity.Netcode;
 
-public abstract class CharacterBase : MonoBehaviour
+public abstract class CharacterBase : NetworkBehaviour
 {
     [Header("Base Stats")]
     public int maxHealth = 100;
@@ -23,6 +24,15 @@ public abstract class CharacterBase : MonoBehaviour
     }
 
     #region Combat Methods
+
+    public virtual void TakeTurn()
+    {
+        if (!isAlive)
+        {
+            Debug.Log($"{name} no puede actuar porque está muerto.");
+            return;
+        }
+    }
 
     public virtual void TakeDamage(int amount)
     {

@@ -1,16 +1,22 @@
+using Unity.Netcode;
 using UnityEngine;
 
 public class OnlineConnector : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    public void StartAsHost()
     {
-        
+        NetworkManager.Singleton.StartHost();
+        Debug.Log("Host iniciado");
     }
 
-    // Update is called once per frame
-    void Update()
+    public void StartAsClient()
     {
-        
+        NetworkManager.Singleton.StartClient();
+        Debug.Log("Cliente conectado");
+    }
+
+    public void Shutdown()
+    {
+        NetworkManager.Singleton.Shutdown();
     }
 }

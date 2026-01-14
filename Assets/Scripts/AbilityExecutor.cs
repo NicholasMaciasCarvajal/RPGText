@@ -55,10 +55,14 @@ public class AbilityExecutor : MonoBehaviour
         CharacterBase target,
         Ability ability)
     {
-        foreach (var effect in ability.statusEffects)
+        if (ability.statusEffect)
         {
+            var effect = ability.statusEffect;
             effect.ApplyEffect(target);
-            Debug.Log($"{target.name} recibe efecto {effect.effectName}");
+        }
+        else
+        {
+            return;
         }
     }
 }

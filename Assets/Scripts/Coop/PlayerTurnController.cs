@@ -1,85 +1,96 @@
+using Unity.Netcode;
 using UnityEngine;
-using System.Collections.Generic;
 
-public class PlayerTurnController : MonoBehaviour
+public class PlayerTurnController : NetworkBehaviour
 {
     private PlayerCharacter player;
-    private Inventory inventory;
-    private EquipmentManager equipment;
+    private bool actionSubmitted = false;
 
-    [Header("Current Selection")]
-    public Ability selectedAbility;
-    public Item selectedItem;
+    private NetworkBattleManager battleManager;
 
     private void Awake()
     {
         player = GetComponent<PlayerCharacter>();
-        inventory = player.inventory;
-        equipment = player.equipmentManager;
+    }
 
-        if (player == null)
-            Debug.LogError("PlayerTurnController requiere PlayerCharacter");
+    private void Start()
+    {
+        battleManager = FindFirstObjectByType<NetworkBattleManager>();
     }
 
     private void Update()
     {
-        if (!player.CanAct()) return; // Solo puede actuar si es su turno
+        if (!IsOwner) return;
+        if (!player.CanAct()) return;
+        if (actionSubmitted) return;
 
-        // **Aquí iría tu UI de selección de habilidades/items**
-        // Por ejemplo:
-        if (Input.GetKeyDown(KeyCode.Alpha1)) // Selecciona habilidad 1
-        {
-            UseAbility(0);
-        }
+        // Ejemplo simple: teclas directas
+        if (Input.GetKeyDown(KeyCode.Alpha1))
+            SubmitAbility(0);
 
-        if (Input.GetKeyDown(KeyCode.Alpha2)) // Usar item 1
-        {
-            UseItem(0);
-        }
+        if (Input.GetKeyDown(KeyCode.Alpha2))
+            SubmitItem(0);
     }
 
-    #region Acciones del jugador
-
-    public void UseAbility(int abilityIndex)
+    private void SubmitAbility(int abilityIndex)
     {
-        if (abilityIndex < 0 || abilityIndex >= player.abilities.Count) return;
+        if (battleManager == null) return;
 
-        selectedAbility = player.abilities[abilityIndex];
-        if (!player.SpendEnergy(selectedAbility.energyCost))
-        {
-            Debug.Log("No hay energía suficiente para usar esta habilidad.");
-            return;
-        }
+        // aquí elegirías también el objetivo
+        ulong dummyTarget = 0;
 
-        // Selección simple de objetivo: enemigo vivo
-        EnemyCharacter target = BattleManager.Instance.GetRandomAliveEnemy();
-        if (target == null)
-        {
-            Debug.Log("No hay enemigos vivos.");
-            return;
-        }
-        
+        battleManager.SubmitPlayerActionServerRpc(
+            abilityIndex,
+            dummyTarget
+        );
 
-        AbilityExecutor.ExecuteAbility(player, target, selectedAbility);
-
-        EndTurn();
-    }
-
-    public void UseItem(int itemIndex)
-    {
-        if (inventory.items.Count == 0 || itemIndex >= inventory.items.Count) return;
-
-        selectedItem = inventory.items[itemIndex];
-        inventory.UseItem(selectedItem, player);
-
-        EndTurn();
-    }
-
-    private void EndTurn()
-    {
+        actionSubmitted = true;
         player.EnableInput(false);
-        CoopManager.Instance.EndCurrentPlayerTurn(player);
     }
 
-    #endregion
+    private void SubmitItem(int itemIndex)
+    {
+        if (battleManager == null) return;
+
+        ulong dummyTarget = 0;
+
+        battleManager.SubmitPlayerActionServerRpc(
+            itemIndex,
+            dummyTarget
+        );
+
+        actionSubmitted = true;
+        player.EnableInput(false);
+    }
+
+    public void ResetTurnInput()
+    {
+        actionSubmitted = false;
+        player.EnableInput(true);
+    }
+
+    public void SendAbilityChoice(int abilityIndex)
+    {
+        // entra a modo seleccionar objetivo
+        TargetSelectionController.Instance.BeginTargetSelection(this, abilityIndex);
+    }
+
+    public void SendItemChoice(int itemIndex)
+    {
+        TargetSelectionController.Instance.BeginTargetSelection(this, itemIndex);
+    }
+
+    public void SubmitAbilityWithTarget(int abilityIndex, EnemyCharacter target)
+    {
+        var targetNetwork = target.GetComponent<NetworkObject>();
+
+        battleManager.SubmitPlayerActionServerRpc(
+            abilityIndex,
+            targetNetwork.NetworkObjectId
+        );
+
+        actionSubmitted = true;
+        player.EnableInput(false);
+    }
+
 }
