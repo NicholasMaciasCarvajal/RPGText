@@ -62,10 +62,12 @@ public class NetworkBattleManager : NetworkBehaviour
 
     // =================== CLIENT - SERVER ===================
 
-    // client envía su decisión
-    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
-    // [ServerRpc(RequireOwnership = false)]
-    public void SubmitPlayerActionServerRpc(int abilityId, ulong targetNetworkId, ServerRpcParams rpcParams = default)
+    [ServerRpc(RequireOwnership = false)]
+    public void SubmitPlayerActionServerRpc(
+        int abilityId,
+        ulong targetNetworkId,
+        ServerRpcParams rpcParams = default)
+
     {
         if (!IsServer) return;
 
