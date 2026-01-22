@@ -1,7 +1,15 @@
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "GameEvent", menuName = "Scriptable Objects/GameEvent")]
-public class GameEvent : ScriptableObject
+public abstract class GameEvent : ScriptableObject
 {
-    
+    public enum EventType
+    {
+        Combat,
+        Loot,
+        Empty,
+        Narrative
+    }
+
+    public string eventName;
+    public EventType eventType;
 }

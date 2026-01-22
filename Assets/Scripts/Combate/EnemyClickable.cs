@@ -11,7 +11,9 @@ public class EnemyClickable : MonoBehaviour
 
     private void OnMouseDown()
     {
-        if (TargetSelectionController.Instance != null)
-            TargetSelectionController.Instance.SelectTarget(enemy);
+        if (enemy == null || !enemy.isAlive)
+            return;
+
+        TargetSelectionController.Instance.SelectTarget(enemy);
     }
 }

@@ -1,96 +1,86 @@
-using Unity.Netcode;
+﻿using Unity.Netcode;
 using UnityEngine;
 
 public class PlayerTurnController : NetworkBehaviour
 {
     private PlayerCharacter player;
-    private bool actionSubmitted = false;
 
-    private NetworkBattleManager battleManager;
+    private int selectedAbilityIndex = -1;
+    private ulong selectedTargetId;
 
     private void Awake()
     {
         player = GetComponent<PlayerCharacter>();
     }
 
-    private void Start()
-    {
-        battleManager = FindFirstObjectByType<NetworkBattleManager>();
-    }
-
-    private void Update()
-    {
-        if (!IsOwner) return;
-        if (!player.CanAct()) return;
-        if (actionSubmitted) return;
-
-        // Ejemplo simple: teclas directas
-        if (Input.GetKeyDown(KeyCode.Alpha1))
-            SubmitAbility(0);
-
-        if (Input.GetKeyDown(KeyCode.Alpha2))
-            SubmitItem(0);
-    }
-
-    private void SubmitAbility(int abilityIndex)
-    {
-        if (battleManager == null) return;
-
-        // aqu� elegir�as tambi�n el objetivo
-        ulong dummyTarget = 0;
-
-        battleManager.SubmitPlayerActionServerRpc(
-            abilityIndex,
-            dummyTarget
-        );
-
-        actionSubmitted = true;
-        player.EnableInput(false);
-    }
-
-    private void SubmitItem(int itemIndex)
-    {
-        if (battleManager == null) return;
-
-        ulong dummyTarget = 0;
-
-        battleManager.SubmitPlayerActionServerRpc(
-            itemIndex,
-            dummyTarget
-        );
-
-        actionSubmitted = true;
-        player.EnableInput(false);
-    }
+    // ================== CONTROL DE TURNO ==================
 
     public void ResetTurnInput()
     {
-        actionSubmitted = false;
+        if (!IsOwner) return;
+
+        selectedAbilityIndex = -1;
+        selectedTargetId = 0;
+
         player.EnableInput(true);
+
+        Debug.Log("[CLIENT] Tu turno ha comenzado.");
     }
 
+    // ================== DESDE UI ==================
+
+    // llamado por BattleInputController
     public void SendAbilityChoice(int abilityIndex)
     {
-        // entra a modo seleccionar objetivo
-        TargetSelectionController.Instance.BeginTargetSelection(this, abilityIndex);
+        if (!IsOwner) return;
+        if (!player.CanAct()) return;
+
+        if (abilityIndex < 0 || abilityIndex >= player.abilities.Count)
+            return;
+
+        selectedAbilityIndex = abilityIndex;
+
+        Debug.Log($"[CLIENT] Habilidad seleccionada: {player.abilities[abilityIndex].abilityName}");
+
+        // iniciar selección de objetivo
+        TargetSelectionController.Instance
+            .BeginTargetSelection(this, abilityIndex);
     }
 
+    // (para más adelante, ítems)
     public void SendItemChoice(int itemIndex)
     {
-        TargetSelectionController.Instance.BeginTargetSelection(this, itemIndex);
+        if (!IsOwner) return;
+        if (!player.CanAct()) return;
+
+        Debug.Log($"[CLIENT] Item seleccionado índice {itemIndex}");
+
+        // aquí luego hacemos TargetSelection también
     }
 
-    public void SubmitAbilityWithTarget(int abilityIndex, EnemyCharacter target)
+    // ================== DESDE TARGET SELECTION ==================
+
+    public void SubmitAbilityWithTarget(int abilityIndex, EnemyCharacter enemy)
     {
-        var targetNetwork = target.GetComponent<NetworkObject>();
+        if (!IsOwner) return;
+        if (!player.CanAct()) return;
 
-        battleManager.SubmitPlayerActionServerRpc(
-            abilityIndex,
-            targetNetwork.NetworkObjectId
-        );
+        var targetNetObj = enemy.GetComponent<NetworkObject>();
+        if (targetNetObj == null) return;
 
-        actionSubmitted = true;
+        selectedTargetId = targetNetObj.NetworkObjectId;
+
+        Debug.Log($"[CLIENT] Enviando acción al servidor: habilidad {abilityIndex} → {enemy.name}");
+
+        // enviar al servidor
+        NetworkBattleManager.Instance
+            .SubmitPlayerActionServerRpc(abilityIndex, selectedTargetId);
+
+        // bloquear input local
         player.EnableInput(false);
-    }
 
+        // limpiar selección local
+        selectedAbilityIndex = -1;
+        selectedTargetId = 0;
+    }
 }

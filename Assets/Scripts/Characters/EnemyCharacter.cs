@@ -7,15 +7,12 @@ public class EnemyCharacter : CharacterBase
     [Header("Enemy AI")]
     public List<Ability> abilities = new List<Ability>();
 
-    // probabilidad base si habilidad no define la suya
     [Range(0f, 1f)]
     public float defaultHitChance = 0.85f;
 
     public override void TakeTurn()
     {
-        if (!NetworkManager.Singleton.IsServer)
-            return;
-
+        if (!IsServer) return;
         if (!isAlive) return;
 
         Debug.Log($"{name} está decidiendo su acción…");
@@ -34,7 +31,6 @@ public class EnemyCharacter : CharacterBase
 
         if (abilities.Count == 0)
         {
-            Debug.Log("No tengo habilidades. Ataque básico.");
             BasicAttack(target);
             return;
         }
@@ -48,20 +44,38 @@ public class EnemyCharacter : CharacterBase
 
         if (roll <= defaultHitChance)
         {
-            target.TakeDamageServerRpc(attack);
+            int damage = attack;
+
+            // daño en servidor
+            target.TakeDamage(damage);
+
+            // notificar a clientes
+            NotifyEnemyAttackClientRpc(
+                NetworkObjectId,
+                target.GetComponent<NetworkObject>().NetworkObjectId,
+                damage,
+                true
+            );
+
             Debug.Log($"{name} acertó ataque básico a {target.name}");
         }
         else
         {
+            NotifyEnemyAttackClientRpc(
+                NetworkObjectId,
+                target.GetComponent<NetworkObject>().NetworkObjectId,
+                0,
+                false
+            );
+
             Debug.Log($"{name} falló ataque básico a {target.name}");
         }
     }
 
-    public void UseRandomAbility(PlayerCharacter target)
+    private void UseRandomAbility(PlayerCharacter target)
     {
         Ability ability = abilities[Random.Range(0, abilities.Count)];
 
-        // Probabilidad (si la habilidad tiene la suya, úsala)
         float hitChance = ability.hitChance > 0
             ? ability.hitChance
             : defaultHitChance;
@@ -70,16 +84,31 @@ public class EnemyCharacter : CharacterBase
 
         if (roll > hitChance)
         {
+            NotifyEnemyAttackClientRpc(
+                NetworkObjectId,
+                target.GetComponent<NetworkObject>().NetworkObjectId,
+                0,
+                false
+            );
+
             Debug.Log($"{name} falló {ability.abilityName} contra {target.name}");
             return;
         }
 
-        int damage = ability.RollDamage();
+        // ejecutar habilidad real y obtener daño real
+        int damage = AbilityExecutor.ExecuteAbility(this, target, ability);
 
-        target.TakeDamageServerRpc(damage);
+        // notificar clientes con el daño real aplicado
+        NotifyEnemyAttackClientRpc(
+            NetworkObjectId,
+            target.GetComponent<NetworkObject>().NetworkObjectId,
+            damage,
+            true
+        );
 
         Debug.Log($"{name} usó {ability.abilityName} contra {target.name} e hizo {damage} daño");
     }
+
 
     private PlayerCharacter ChooseTarget()
     {
@@ -95,5 +124,35 @@ public class EnemyCharacter : CharacterBase
 
         int index = Random.Range(0, alive.Count);
         return alive[index];
+    }
+
+    // =================== SYNC A CLIENTES ===================
+
+    [ClientRpc]
+    private void NotifyEnemyAttackClientRpc(
+        ulong enemyId,
+        ulong targetId,
+        int damage,
+        bool hit)
+    {
+        var enemy = NetworkManager.Singleton.SpawnManager
+            .SpawnedObjects[enemyId].GetComponent<CharacterBase>();
+
+        var target = NetworkManager.Singleton.SpawnManager
+            .SpawnedObjects[targetId].GetComponent<CharacterBase>();
+
+        if (hit)
+        {
+            Debug.Log($"[CLIENT] {enemy.name} atacó a {target.name} por {damage}");
+        }
+        else
+        {
+            Debug.Log($"[CLIENT] {enemy.name} falló ataque contra {target.name}");
+        }
+
+        // aquí luego:
+        // animaciones
+        // texto flotante
+        // sonido
     }
 }

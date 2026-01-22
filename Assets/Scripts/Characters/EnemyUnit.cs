@@ -1,41 +1,41 @@
 using System.Collections.Generic;
-using UnityEngine;
 using Unity.Netcode;
+using UnityEngine;
 
-public class EnemyUnit : NetworkBehaviour
+public class EnemyUnit : CharacterBase
 {
-    public int maxHp = 100;
-    public int currentHp;
-
     [Header("Pool de habilidades disponibles")]
-    public List<EnemySkill> skillPool;
+    public List<Ability> skillPool;
 
     [Header("Habilidades activas")]
-    public List<EnemySkill> activeSkills = new List<EnemySkill>();
+    public List<Ability> abilities = new List<Ability>();
 
     public int minSkills = 1;
     public int maxSkills = 3;
 
+    protected override void Awake()
+    {
+        base.Awake();
+    }
+
     private void Start()
     {
-        currentHp = maxHp;
-
         if (IsServer)
             RandomizeSkills();
     }
 
     private void RandomizeSkills()
     {
-        activeSkills.Clear();
+        abilities.Clear();
 
         int skillsToAssign = Random.Range(minSkills, maxSkills + 1);
 
-        var poolCopy = new List<EnemySkill>(skillPool);
+        var poolCopy = new List<Ability>(skillPool);
 
         for (int i = 0; i < skillsToAssign && poolCopy.Count > 0; i++)
         {
             int index = Random.Range(0, poolCopy.Count);
-            activeSkills.Add(poolCopy[index]);
+            abilities.Add(poolCopy[index]);
             poolCopy.RemoveAt(index);
         }
     }

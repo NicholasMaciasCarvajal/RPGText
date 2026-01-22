@@ -17,6 +17,10 @@ public abstract class CharacterBase : NetworkBehaviour
     [Header("Status")]
     public bool isAlive = true;
 
+    [Header("Status Effects")]
+    public List<ActiveStatusEffect> activeStatusEffects = new List<ActiveStatusEffect>();
+
+
     protected virtual void Awake()
     {
         currentHealth = maxHealth;
@@ -65,6 +69,48 @@ public abstract class CharacterBase : NetworkBehaviour
     {
         isAlive = false;
         Debug.Log($"{name} ha muerto.");
+    }
+
+    public void AddStatusEffect(StatusEffect effect)
+    {
+        if (!IsServer) return;
+
+        foreach (var active in activeStatusEffects)
+        {
+            if (active.baseEffect == effect)
+            {
+                // refrescar duración en vez de ignorar
+                active.Refresh();
+                return;
+            }
+        }
+
+        var newEffect = new ActiveStatusEffect(effect, this);
+        activeStatusEffects.Add(newEffect);
+
+        Debug.Log($"{name} recibe efecto {effect.effectName}");
+    }
+
+
+    public void RemoveStatusEffect(ActiveStatusEffect effect)
+    {
+        activeStatusEffects.Remove(effect);
+    }
+
+    public void OnTurnStart()
+    {
+        foreach (var effect in new List<ActiveStatusEffect>(activeStatusEffects))
+        {
+            effect.OnTurnStart();
+        }
+    }
+
+    public void OnTurnEnd()
+    {
+        foreach (var effect in new List<ActiveStatusEffect>(activeStatusEffects))
+        {
+            effect.OnTurnEnd();
+        }
     }
 
     #endregion

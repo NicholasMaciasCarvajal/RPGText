@@ -2,23 +2,35 @@ using UnityEngine;
 
 public class AbilityExecutor : MonoBehaviour
 {
-    public static void ExecuteAbility(
+    public static int ExecuteAbility(
         CharacterBase caster,
         CharacterBase target,
         Ability ability)
     {
+        // Seguridad: solo el servidor ejecuta lógica de combate
+        if (!caster.IsServer)
+        {
+            Debug.LogWarning("ExecuteAbility llamado fuera del servidor.");
+            return 0;
+        }
+
         if (!caster.SpendEnergy(ability.energyCost))
         {
             Debug.Log("No hay energía suficiente.");
-            return;
+            return 0;
         }
 
-        Debug.Log($"{caster.name} usa {ability.abilityName} en {target.name}");
+        CombatLogManager.Instance.LogServer(
+            $"{caster.name} usa {ability.abilityName} en {target.name}"
+        );
+
+
+        int damageDealt = 0;
 
         switch (ability.abilityType)
         {
             case AbilityType.Attack:
-                ExecuteAttack(caster, target, ability);
+                damageDealt = ExecuteAttack(caster, target, ability);
                 break;
 
             case AbilityType.Support:
@@ -30,16 +42,22 @@ public class AbilityExecutor : MonoBehaviour
                 ApplyStatusEffects(target, ability);
                 break;
         }
+
+        return damageDealt;
     }
 
-    private static void ExecuteAttack(
+    private static int ExecuteAttack(
         CharacterBase caster,
         CharacterBase target,
         Ability ability)
     {
         int damage = ability.basePower + caster.attack;
+
         target.TakeDamage(damage);
+
         ApplyStatusEffects(target, ability);
+
+        return damage;
     }
 
     private static void ExecuteSupport(
@@ -48,6 +66,7 @@ public class AbilityExecutor : MonoBehaviour
         Ability ability)
     {
         target.Heal(ability.basePower);
+
         ApplyStatusEffects(target, ability);
     }
 
@@ -55,14 +74,9 @@ public class AbilityExecutor : MonoBehaviour
         CharacterBase target,
         Ability ability)
     {
-        if (ability.statusEffect)
+        if (ability.statusEffect != null)
         {
-            var effect = ability.statusEffect;
-            effect.ApplyEffect(target);
-        }
-        else
-        {
-            return;
+            target.AddStatusEffect(ability.statusEffect);
         }
     }
 }

@@ -60,10 +60,34 @@ public class TurnManager : NetworkBehaviour
                 EnablePlayersSelectionClientRpc();
                 break;
 
-
             case TurnOwner.Enemies:
+
+                ProcessTurnStartServer();
+
+                // aplicar OnTurnStart a enemigos
+                foreach (var enemy in battle.enemies)
+                {
+                    if (enemy != null && enemy.isAlive)
+                        enemy.OnTurnStart();
+                }
+
                 battle.ResolveEnemiesPhaseServer();
                 break;
+        }
+    }
+
+    private void ProcessTurnStartServer()
+    {
+        foreach (var player in new[] { GameManager.Instance.player1, GameManager.Instance.player2 })
+        {
+            if (player != null && player.isAlive)
+                player.OnTurnStart();
+        }
+
+        foreach (var enemy in FindObjectsByType<EnemyCharacter>(FindObjectsSortMode.None))
+        {
+            if (enemy != null && enemy.isAlive)
+                enemy.OnTurnStart();
         }
     }
 
@@ -71,6 +95,27 @@ public class TurnManager : NetworkBehaviour
     public void EndTurnServer()
     {
         if (!IsServer) return;
+
+        ProcessTurnStartServer();
+
+        // aplicar OnTurnEnd al grupo actual
+        var battle = FindFirstObjectByType<NetworkBattleManager>();
+
+        switch (CurrentTurn)
+        {
+            case TurnOwner.Player1AndPlayer2:
+                GameManager.Instance.player1?.OnTurnEnd();
+                GameManager.Instance.player2?.OnTurnEnd();
+                break;
+
+            case TurnOwner.Enemies:
+                foreach (var enemy in battle.enemies)
+                {
+                    if (enemy != null && enemy.isAlive)
+                        enemy.OnTurnEnd();
+                }
+                break;
+        }
 
         currentTurnIndex.Value++;
 
@@ -103,9 +148,21 @@ public class TurnManager : NetworkBehaviour
     [ClientRpc]
     private void EnablePlayersSelectionClientRpc()
     {
-        GameManager.Instance.player1.GetComponent<PlayerTurnController>()?.ResetTurnInput();
-        GameManager.Instance.player2.GetComponent<PlayerTurnController>()?.ResetTurnInput();
+        var p1 = GameManager.Instance.player1;
+        var p2 = GameManager.Instance.player2;
+
+        p1.GetComponent<PlayerTurnController>()?.ResetTurnInput();
+        p2.GetComponent<PlayerTurnController>()?.ResetTurnInput();
+
+        CombatHUDController.Instance.SetTurnText("Turno de jugadores");
+
+        // mostrar habilidades solo al jugador local
+        var localController = NetworkManager.Singleton.LocalClient.PlayerObject
+            .GetComponent<PlayerTurnController>();
+
+        CombatHUDController.Instance.ShowAbilities(
+            localController,
+            localController.GetComponent<PlayerCharacter>().abilities
+        );
     }
-
-
 }

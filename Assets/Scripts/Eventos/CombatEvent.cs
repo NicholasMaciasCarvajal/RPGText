@@ -1,16 +1,13 @@
 using UnityEngine;
 
-public class CombatEvent : MonoBehaviour
+[CreateAssetMenu(fileName = "CombatEvent", menuName = "Scriptable Objects/CombatEvent")]
+public class CombatEvent : GameEvent
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        
-    }
+    [Header("Enemigos del combate")]
+    public CharacterBase[] enemies;
 
-    // Update is called once per frame
-    void Update()
+    private void OnEnable()
     {
-        
+        eventType = EventType.Combat;
     }
 }

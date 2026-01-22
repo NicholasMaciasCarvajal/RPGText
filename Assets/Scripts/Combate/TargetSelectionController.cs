@@ -9,24 +9,39 @@ public class TargetSelectionController : MonoBehaviour
 
     private void Awake()
     {
-        Instance = this;
+        if (Instance == null)
+            Instance = this;
+        else
+            Destroy(gameObject);
     }
 
+    // llamado cuando el jugador elige habilidad
     public void BeginTargetSelection(PlayerTurnController controller, int abilityIndex)
     {
         localTurnController = controller;
         pendingAbilityIndex = abilityIndex;
 
-        Debug.Log("Selecciona un objetivo…");
+        Debug.Log("[CLIENT] Selecciona un objetivo…");
+
+        // aquí luego:
+        // - activar highlights en enemigos
+        // - cambiar cursor
     }
 
+    // llamado cuando haces click en un enemigo
     public void SelectTarget(EnemyCharacter enemy)
     {
         if (localTurnController == null) return;
+        if (enemy == null || !enemy.isAlive) return;
 
-        localTurnController.SubmitAbilityWithTarget(pendingAbilityIndex, enemy);
+        localTurnController
+            .SubmitAbilityWithTarget(pendingAbilityIndex, enemy);
 
+        // limpiar estado
         localTurnController = null;
         pendingAbilityIndex = -1;
+
+        // aquí luego:
+        // - quitar highlights
     }
 }

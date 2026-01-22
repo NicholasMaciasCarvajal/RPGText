@@ -4,11 +4,12 @@ using System.Collections.Generic;
 using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
+using static UnityEngine.GraphicsBuffer;
 using Random = UnityEngine.Random;
 
 public class NetworkBattleManager : NetworkBehaviour
 {
-    public EnemyUnit[] enemies;
+    public EnemyCharacter[] enemies;
 
     [Serializable]
     public struct QueuedAction : INetworkSerializable, IEquatable<QueuedAction>
@@ -49,8 +50,15 @@ public class NetworkBattleManager : NetworkBehaviour
 
     private TurnManager turnManager;
 
+    public static NetworkBattleManager Instance;
+
     private void Awake()
     {
+        if (Instance == null)
+            Instance = this;
+        else
+            Destroy(gameObject);
+
         queuedActions = new NetworkList<QueuedAction>();
     }
 
@@ -72,6 +80,35 @@ public class NetworkBattleManager : NetworkBehaviour
         if (!IsServer) return;
 
         var clientId = rpcParams.Receive.SenderClientId;
+
+        // obtener jugador del cliente
+        var casterObj = NetworkManager.Singleton.ConnectedClients[clientId].PlayerObject;
+        var caster = casterObj.GetComponent<PlayerCharacter>();
+
+        var targetObj = NetworkManager.Singleton.SpawnManager.SpawnedObjects[targetNetworkId];
+        var target = targetObj.GetComponent<CharacterBase>();
+
+        if (target == null || !target.isAlive)
+            return;
+
+        if (!caster.CanAct())
+        {
+            Debug.LogWarning("Jugador intentó actuar fuera de turno.");
+            return;
+        }
+
+        // evitar atacar aliados por error
+        if (target is PlayerCharacter && caster is PlayerCharacter)
+        {
+            Debug.LogWarning("Jugador intentó atacar aliado.");
+            return;
+        }
+
+        if (abilityId < 0 || abilityId >= caster.abilities.Count)
+            return;
+
+        if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.ContainsKey(targetNetworkId))
+            return;
 
         // evitar más de 1 acción por jugador
         foreach (var qa in queuedActions)
@@ -123,6 +160,8 @@ public class NetworkBattleManager : NetworkBehaviour
 
         queuedActions.Clear();
 
+        CombatHUDController.Instance.HideAbilities();
+
         // avanzar turno
         turnManager.EndTurnServer();
     }
@@ -143,6 +182,8 @@ public class NetworkBattleManager : NetworkBehaviour
 
         // execute ability
         AbilityExecutor.ExecuteAbility(caster, target, ability);
+
+        CheckBattleEnd();
 
         // notify clients
         BroadcastActionResolutionClientRpc(
@@ -181,6 +222,8 @@ public class NetworkBattleManager : NetworkBehaviour
     public void ResolveEnemiesPhaseServer()
     {
         if (!IsServer) return;
+        
+        CombatHUDController.Instance.SetTurnText("Turno de enemigos");
 
         Debug.Log("[SERVER] Resolviendo turno de enemigos…");
 
@@ -199,34 +242,81 @@ public class NetworkBattleManager : NetworkBehaviour
         GameManager.Instance.turnManager.EndTurnServer();
     }
 
-    private void ExecuteEnemyAction(EnemyUnit enemy)
+    private void ExecuteEnemyAction(EnemyCharacter enemy)
     {
-        if (enemy.activeSkills.Count == 0)
+        if (enemy == null || !enemy.isAlive)
+            return;
+
+        // elegir objetivo vivo
+        PlayerCharacter target = GetRandomAlivePlayer();
+
+        if (target == null)
         {
-            Debug.Log("Enemy has no skills");
+            Debug.Log("No hay jugadores vivos para atacar.");
             return;
         }
 
-        // Seleccionar skill
-        var skill = enemy.activeSkills[Random.Range(0, enemy.activeSkills.Count)];
-
-        // Seleccionar objetivo (Player 1 o 2)
-        var target = Random.value < 0.5f
-            ? GameManager.Instance.player1
-            : GameManager.Instance.player2;
-
-        // Checar fallo
-        if (Random.value < skill.failChance)
+        // si no tiene habilidades, ataque básico
+        if (enemy.abilities.Count == 0)
         {
-            Debug.Log($"Enemy failed using {skill.skillName}");
+            int damage = enemy.attack;
+            target.TakeDamage(damage);
+
+            CheckBattleEnd();
+
+            Debug.Log($"Enemy {enemy.name} hizo ataque básico a {target.name} por {damage}");
             return;
         }
 
-        int dmg = skill.RollDamage();
+        // elegir habilidad aleatoria
+        Ability ability = enemy.abilities[Random.Range(0, enemy.abilities.Count)];
 
-        target.TakeDamage(dmg);
+        // chequeo de hit
+        float hitChance = ability.hitChance > 0 ? ability.hitChance : enemy.defaultHitChance;
 
-        Debug.Log($"Enemy used {skill.skillName} on {target.name} for {dmg} damage");
+        if (Random.value > hitChance)
+        {
+            Debug.Log($"Enemy {enemy.name} falló {ability.abilityName} contra {target.name}");
+            return;
+        }
+
+        // ejecutar habilidad real (con energía, efectos, estados, etc.)
+        AbilityExecutor.ExecuteAbility(enemy, target, ability);
+
+        CheckBattleEnd();
+
+        Debug.Log($"Enemy {enemy.name} usó {ability.abilityName} contra {target.name}");
+    }
+
+    public void StartBattle(CombatEvent combatEvent)
+    {
+        if (!IsServer) return;
+
+        Debug.Log("[BATTLE] Iniciando combate desde evento");
+
+        // Conversión explícita de CharacterBase[] a EnemyCharacter[]
+        enemies = combatEvent.enemies.Cast<EnemyCharacter>().ToArray();
+
+        turnManager = FindFirstObjectByType<TurnManager>();
+        turnManager.EndTurnServer(); // inicia turno
+    }
+
+
+    private void CheckBattleEnd()
+    {
+        bool enemiesAlive = enemies.Any(e => e != null && e.isAlive);
+        bool playersAlive =
+            GameManager.Instance.player1.isAlive ||
+            GameManager.Instance.player2.isAlive;
+
+        if (!enemiesAlive)
+        {
+            GameFlowManager.Instance.EndCombatVictory();
+        }
+        else if (!playersAlive)
+        {
+            GameFlowManager.Instance.EndCombatDefeat();
+        }
     }
 
     private PlayerCharacter GetRandomAlivePlayer()
