@@ -70,22 +70,4 @@ public class PlayerCharacter : CharacterBase
         GameManager.Instance.turnManager.EndTurnServer();
     }
 
-    // ------------------ COMBATE ------------------
-
-    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
-    // [ServerRpc(RequireOwnership = false)]
-    public void TakeDamageServerRpc(int amount)
-    {
-        if (!isAlive) return;
-
-        currentHealth -= amount;
-        netHealth.Value = currentHealth;
-
-        if (currentHealth <= 0)
-        {
-            currentHealth = 0;
-            isAlive = false;
-            Debug.Log($"{name} ha muerto");
-        }
-    }
 }

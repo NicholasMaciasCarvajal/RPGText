@@ -40,10 +40,13 @@ public abstract class CharacterBase : NetworkBehaviour
 
     public virtual void TakeDamage(int amount)
     {
+        if (!IsServer) return;
+        if (!isAlive) return;
+
         int finalDamage = Mathf.Max(amount - defense, 1);
         currentHealth -= finalDamage;
 
-        Debug.Log($"{name} recibe {finalDamage} de daño.");
+        OnHealthChangedClientRpc(currentHealth);
 
         if (currentHealth <= 0)
         {
@@ -111,6 +114,12 @@ public abstract class CharacterBase : NetworkBehaviour
         {
             effect.OnTurnEnd();
         }
+    }
+
+    [ClientRpc]
+    private void OnHealthChangedClientRpc(int newHealth)
+    {
+        currentHealth = newHealth;
     }
 
     #endregion

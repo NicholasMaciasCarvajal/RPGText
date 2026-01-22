@@ -41,7 +41,7 @@ public class ProgressionManager : MonoBehaviour
         // Narrativa fija al entrar (si existe)
         if (node.entryNarrative != null)
         {
-            GameFlowManager.Instance.EnterNarrative(node.entryNarrative);
+            GameFlowManager.Instance.EnterNarrative();
         }
         else
         {
@@ -148,7 +148,7 @@ public class ProgressionManager : MonoBehaviour
             Debug.Log("[PROGRESSION] Encuentro NARRATIVO");
 
             NarrativeNode narrative = GameFlowManager.Instance.GetRandomNarrativeNode();
-            GameFlowManager.Instance.EnterNarrative(narrative);
+            GameFlowManager.Instance.EnterNarrative();
         }
         else
         {

@@ -46,19 +46,19 @@ public class GameFlowManager : MonoBehaviour
 
     // =================== NARRATIVA ===================
 
-    public void EnterNarrative(NarrativeNode node = null)
+    public void EnterNarrative()
     {
-        currentState = GameState.Narrative;
-
-        Debug.Log("[FLOW] Entrando en narrativa");
-
-        NarrativeManager.Instance.StartNarrative(node);
+        NarrativeHUDController.Instance.Show();
+        NarrativeManager.Instance.StartNarrative();
     }
+
 
     // =================== COMBATE ===================
 
     public void EnterCombat(CombatEvent combatEvent)
     {
+        NarrativeHUDController.Instance.Hide();
+
         currentState = GameState.Combat;
 
         Debug.Log("[FLOW] Entrando en combate");
@@ -73,7 +73,16 @@ public class GameFlowManager : MonoBehaviour
         ProgressionManager.Instance.ContinueAfterEvent();
     }
 
+    internal void EnterRandomCombat(CombatEvent combatEvent)
+    {
+        NarrativeHUDController.Instance.Hide();
 
+        currentState = GameState.Combat;
+
+        Debug.Log("[FLOW] Entrando en combate");
+
+        NetworkBattleManager.Instance.StartBattle(combatEvent);
+    }
 
     public void EndCombatDefeat()
     {

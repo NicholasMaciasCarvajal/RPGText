@@ -1,15 +1,15 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 public class NarrativeManager : MonoBehaviour
 {
     public static NarrativeManager Instance;
 
     [Header("Nodo inicial")]
-    public NarrativeNode startingNode;
+    public NarrativeNode startNode;
 
     private NarrativeNode currentNode;
-
-    private EventResolver eventResolver;
+    private Stack<NarrativeNode> history = new Stack<NarrativeNode>();
 
     private void Awake()
     {
@@ -19,70 +19,71 @@ public class NarrativeManager : MonoBehaviour
             Destroy(gameObject);
     }
 
-    private void Start()
+    // =================== ENTRAR EN NARRATIVA ===================
+
+    public void StartNarrative()
     {
-        eventResolver = FindFirstObjectByType<EventResolver>();
+        currentNode = startNode;
+        history.Clear();
+
+        EnterNode(currentNode);
     }
 
-    // Llamado por GameFlowManager al entrar en narrativa
-    public void StartNarrative(NarrativeNode node = null)
+    private void EnterNode(NarrativeNode node)
     {
-        if (node == null)
-            currentNode = startingNode;
-        else
-            currentNode = node;
+        currentNode = node;
 
-        ShowCurrentNode();
-    }
+        NarrativeHUDController.Instance.Show();
+        NarrativeHUDController.Instance.ShowNode(node, this);
 
-    private void ShowCurrentNode()
-    {
-        Debug.Log("=================================");
-        Debug.Log("[NARRATIVE] " + currentNode.narrativeText);
-
-        for (int i = 0; i < currentNode.choices.Count; i++)
+        // Si el nodo tiene evento al entrar
+        if (node.onEnterEvent != null)
         {
-            Debug.Log($"[{i}] {currentNode.choices[i].choiceText}");
+            EventResolver resolver = FindObjectOfType<EventResolver>();
+            resolver.ResolveEvent(node.onEnterEvent);
         }
-
-        ProgressionManager.Instance.ContinueAfterEvent();
-
-
-        Debug.Log("=================================");
     }
 
-    // Esto luego se conectará a botones UI
-    public void ChooseOption(int index)
+    // =================== ELECCIÓN ===================
+
+    public void SelectChoice(NarrativeChoiceData choice)
     {
-        if (index < 0 || index >= currentNode.choices.Count)
+        // Evento al elegir
+        if (choice.choiceEvent != null)
+        {
+            EventResolver resolver = FindObjectOfType<EventResolver>();
+            resolver.ResolveEvent(choice.choiceEvent);
             return;
-
-        NarrativeChoice choice = currentNode.choices[index];
-
-        Debug.Log($"[NARRATIVE] Elegiste: {choice.choiceText}");
-
-        // Si hay evento, resolver evento primero
-        if (choice.linkedEvent != null)
-        {
-            eventResolver.ResolveEvent(choice.linkedEvent);
         }
-        else if (choice.nextNode != null)
+
+        // Forzar combate
+        if (choice.forceCombat)
         {
-            // continuar narrativa directamente
-            StartNarrative(choice.nextNode);
+            Debug.Log("[NARRATIVE] Opción fuerza combate");
+            GameFlowManager.Instance.EnterRandomCombat((CombatEvent)null);
+            return;
+        }
+
+        // Retroceder
+        if (choice.goBack)
+        {
+            if (history.Count > 0)
+            {
+                var previous = history.Pop();
+                EnterNode(previous);
+            }
+            return;
+        }
+
+        // Avanzar normal
+        if (choice.nextNode != null)
+        {
+            history.Push(currentNode);
+            EnterNode(choice.nextNode);
         }
         else
         {
-            Debug.LogWarning("Opción sin evento ni siguiente nodo.");
+            Debug.LogWarning("Choice sin nextNode definido");
         }
-    }
-
-    // Llamado cuando termina un combate / loot / evento
-    public void ContinueAfterEvent(NarrativeNode nextNode)
-    {
-        if (nextNode != null)
-            StartNarrative(nextNode);
-        else
-            Debug.Log("[NARRATIVE] Fin de narrativa (no hay siguiente nodo)");
     }
 }
