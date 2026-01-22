@@ -1,14 +1,23 @@
 using UnityEngine;
+using UnityEngine.UI;
 
-[System.Serializable]
-public class NarrativeChoice
+public class NarrativeChoice : MonoBehaviour
 {
-    [TextArea]
-    public string choiceText;
+    public Text label;
 
-    // Evento que se ejecuta al elegir esta opción
-    public GameEvent linkedEvent;
+    private NarrativeChoiceData data;
+    private NarrativeManager manager;
 
-    // Nodo al que se pasa después (si no hay evento o después del evento)
-    public NarrativeNode nextNode;
+    public void Setup(NarrativeManager mgr, NarrativeChoiceData choiceData)
+    {
+        manager = mgr;
+        data = choiceData;
+
+        label.text = data.choiceText;
+    }
+
+    public void OnClick()
+    {
+        manager.SelectChoice(data);
+    }
 }
