@@ -22,7 +22,8 @@ public class EventResolver : MonoBehaviour
                 break;
 
             case GameEvent.EventType.Narrative:
-                GameFlowManager.Instance.EnterNarrative();
+                // Solución: obtener un nodo narrativo aleatorio y pasarlo como argumento
+                GameFlowManager.Instance.EnterNarrative(GameFlowManager.Instance.GetRandomNarrativeNode());
                 break;
 
             default:
@@ -35,16 +36,17 @@ public class EventResolver : MonoBehaviour
         GameFlowManager.Instance.EnterCombat(combatEvent);
     }
 
-
     private void ResolveLoot(GameEvent lootEvent)
     {
         Debug.Log("[EVENT] Loot (pendiente implementar)");
-        GameFlowManager.Instance.EnterNarrative();
+        // Solución: obtener un nodo narrativo aleatorio y pasarlo como argumento
+        GameFlowManager.Instance.EnterNarrative(GameFlowManager.Instance.GetRandomNarrativeNode());
     }
 
     private void ResolveEmpty()
     {
         Debug.Log("[EVENT] Evento vacío");
-        GameFlowManager.Instance.EnterNarrative();
+        // Solución: obtener un nodo narrativo aleatorio y pasarlo como argumento
+        GameFlowManager.Instance.EnterNarrative(GameFlowManager.Instance.GetRandomNarrativeNode());
     }
 }

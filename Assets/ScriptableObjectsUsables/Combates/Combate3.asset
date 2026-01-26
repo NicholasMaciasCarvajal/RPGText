@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8da4e83330f722c4686dcd85a155c3a6, type: 3}
-  m_Name: CombateInsano
+  m_Name: Combate3
   m_EditorClassIdentifier: 
-  eventName: 
+  eventName: Combate3
   eventType: 0
   enemies:
-  - {fileID: 0}
+  - {fileID: 4113519649199287125, guid: 79d3cf6b61238624ea24e4237400cbd3, type: 3}

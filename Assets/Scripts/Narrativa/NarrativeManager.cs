@@ -5,9 +5,6 @@ public class NarrativeManager : MonoBehaviour
 {
     public static NarrativeManager Instance;
 
-    [Header("Nodo inicial")]
-    public NarrativeNode startNode;
-
     private NarrativeNode currentNode;
     private Stack<NarrativeNode> history = new Stack<NarrativeNode>();
 
@@ -21,7 +18,7 @@ public class NarrativeManager : MonoBehaviour
 
     // =================== ENTRAR EN NARRATIVA ===================
 
-    public void StartNarrative()
+    public void StartNarrative(NarrativeNode startNode)
     {
         currentNode = startNode;
         history.Clear();
@@ -35,55 +32,31 @@ public class NarrativeManager : MonoBehaviour
 
         NarrativeHUDController.Instance.Show();
         NarrativeHUDController.Instance.ShowNode(node, this);
-
-        // Si el nodo tiene evento al entrar
-        if (node.onEnterEvent != null)
-        {
-            EventResolver resolver = FindObjectOfType<EventResolver>();
-            resolver.ResolveEvent(node.onEnterEvent);
-        }
     }
 
-    // =================== ELECCIÓN ===================
+    // =================== ELECCIÓN DEL JUGADOR ===================
 
     public void SelectChoice(NarrativeChoiceData choice)
     {
-        // Evento al elegir
-        if (choice.choiceEvent != null)
-        {
-            EventResolver resolver = FindObjectOfType<EventResolver>();
-            resolver.ResolveEvent(choice.choiceEvent);
-            return;
-        }
-
-        // Forzar combate
-        if (choice.forceCombat)
-        {
-            Debug.Log("[NARRATIVE] Opción fuerza combate");
-            GameFlowManager.Instance.EnterRandomCombat((CombatEvent)null);
-            return;
-        }
-
-        // Retroceder
-        if (choice.goBack)
-        {
-            if (history.Count > 0)
-            {
-                var previous = history.Pop();
-                EnterNode(previous);
-            }
-            return;
-        }
-
-        // Avanzar normal
+        // Guardar historial si avanza a otro nodo
         if (choice.nextNode != null)
         {
             history.Push(currentNode);
-            EnterNode(choice.nextNode);
         }
-        else
+
+        // Delegar toda la lógica al ProgressionManager
+        NarrativeHUDController.Instance.Hide();
+        ProgressionManager.Instance.ResolveNarrativeChoice(choice);
+    }
+
+    // =================== RETROCEDER DENTRO DE NARRATIVA (OPCIONAL) ===================
+
+    public void GoBackNarrative()
+    {
+        if (history.Count > 0)
         {
-            Debug.LogWarning("Choice sin nextNode definido");
+            var previous = history.Pop();
+            EnterNode(previous);
         }
     }
 }

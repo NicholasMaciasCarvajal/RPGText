@@ -311,6 +311,7 @@ public class NetworkBattleManager : NetworkBehaviour
 
         if (!enemiesAlive)
         {
+            GiveExperienceToPlayers();
             GameFlowManager.Instance.EndCombatVictory();
         }
         else if (!playersAlive)
@@ -335,5 +336,23 @@ public class NetworkBattleManager : NetworkBehaviour
         int index = UnityEngine.Random.Range(0, alivePlayers.Count);
         return alivePlayers[index];
     }
+
+    private void GiveExperienceToPlayers()
+    {
+        int totalXP = 50 * enemies.Length;
+
+        if (GameManager.Instance.player1 != null && GameManager.Instance.player1.isAlive)
+        {
+            GameManager.Instance.player1.experienceSystem.AddExperience(totalXP);
+        }
+
+        if (GameManager.Instance.player2 != null && GameManager.Instance.player2.isAlive)
+        {
+            GameManager.Instance.player2.experienceSystem.AddExperience(totalXP);
+        }
+
+        Debug.Log($"[XP] Cada jugador gana {totalXP} XP");
+    }
+
 
 }

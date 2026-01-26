@@ -9,12 +9,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bc0173e0a19ecc44188e36fb4fc366fc, type: 3}
-  m_Name: Inicio
+  m_Script: {fileID: 11500000, guid: 8da4e83330f722c4686dcd85a155c3a6, type: 3}
+  m_Name: Combate2
   m_EditorClassIdentifier: 
-  nodeId: Start
-  previousNode: {fileID: 0}
-  combatChance: 0.5
-  lootChance: 0.3
-  narrativeChance: 0.2
-  entryNarrative: {fileID: 0}
+  eventName: Combate2
+  eventType: 0
+  enemies:
+  - {fileID: 4113519649199287125, guid: 79d3cf6b61238624ea24e4237400cbd3, type: 3}

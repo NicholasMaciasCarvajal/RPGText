@@ -13,4 +13,15 @@ MonoBehaviour:
   m_Name: Texto2
   m_EditorClassIdentifier: 
   narrativeText: Coooooommmmmmmmmmmmmmbbbbbbbbbbbbbaaaaaaaaaaaaaaaaaaattttttttttttttttttttttttttteeeeeeeeeeeeeeeeeeee
-  choices: []
+  choices:
+  - choiceText: aa
+    nextNode: {fileID: 11400000, guid: 5433e6064ee792e43b0f627208828ad4, type: 2}
+    choiceEvent: {fileID: 0}
+    forceCombat: 0
+    goBack: 0
+  - choiceText: aa
+    nextNode: {fileID: 11400000, guid: 5433e6064ee792e43b0f627208828ad4, type: 2}
+    choiceEvent: {fileID: 0}
+    forceCombat: 0
+    goBack: 1
+  onEnterEvent: {fileID: 0}

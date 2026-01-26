@@ -1,7 +1,8 @@
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class GameManager : MonoBehaviour
+public class GameManager : NetworkBehaviour
 {
     public static GameManager Instance;
 
@@ -12,6 +13,9 @@ public class GameManager : MonoBehaviour
         Pause
     }
 
+    [Header("Tutorial")]
+    public CombatEvent tutorialCombat;
+
     [Header("Game State")]
     public GameState CurrentState;
 
@@ -21,7 +25,7 @@ public class GameManager : MonoBehaviour
 
     [Header("Managers")]
     public TurnManager turnManager;
-    public BattleManager battleManager;
+    public NetworkBattleManager battleManager;
     public NarrativeManager narrativeManager;
 
     private void Awake()
@@ -40,6 +44,13 @@ public class GameManager : MonoBehaviour
     private void Start()
     {
         SetState(GameState.Narrative);
+    }
+
+    public override void OnNetworkSpawn()
+    {
+        if (!IsServer) return;
+
+        AssignPlayers();
     }
 
     public void SetState(GameState newState)
@@ -71,5 +82,36 @@ public class GameManager : MonoBehaviour
     public void LoadScene(string sceneName)
     {
         SceneManager.LoadScene(sceneName);
+    }
+
+    private void AssignPlayers()
+    {
+        var players = FindObjectsOfType<PlayerCharacter>();
+
+        if (players.Length >= 1)
+            player1 = players[0];
+
+        if (players.Length >= 2)
+            player2 = players[1];
+
+        Debug.Log("[GAME] Jugadores asignados");
+
+        // si ya están los dos, iniciar tutorial
+        if (player1 != null && player2 != null)
+        {
+            StartTutorialCombat();
+        }
+    }
+
+    private void StartTutorialCombat()
+    {
+        Debug.Log("[GAME] Iniciando combate tutorial");
+
+        var eventResolver = FindFirstObjectByType<EventResolver>();
+
+        if (eventResolver != null && tutorialCombat != null)
+        {
+            eventResolver.ResolveEvent(tutorialCombat);
+        }
     }
 }

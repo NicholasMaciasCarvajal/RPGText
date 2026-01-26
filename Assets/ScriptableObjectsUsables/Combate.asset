@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: Combate
   m_EditorClassIdentifier: 
   nodeId: combate
-  narrativeNode: {fileID: 11400000, guid: 41af1e8b2bec03947bab8861ef4c0638, type: 2}
-  directEvent: {fileID: 11400000, guid: 05a6454cef52b1d4386c84cc52552c08, type: 2}
-  nextNodes:
-  - {fileID: 11400000, guid: 5477ce12c921a5c459eb7ae3d1d09492, type: 2}
+  previousNode: {fileID: 11400000, guid: 24b7a93e5f139324dadcf915ddcf78e8, type: 2}
+  combatChance: 1
+  lootChance: 0
+  narrativeChance: 0
+  entryNarrative: {fileID: 11400000, guid: 41af1e8b2bec03947bab8861ef4c0638, type: 2}

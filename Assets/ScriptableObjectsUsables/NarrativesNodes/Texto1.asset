@@ -13,4 +13,15 @@ MonoBehaviour:
   m_Name: Texto1
   m_EditorClassIdentifier: 
   narrativeText: Sexondddddd
-  choices: []
+  choices:
+  - choiceText: Combate
+    nextNode: {fileID: 11400000, guid: 41af1e8b2bec03947bab8861ef4c0638, type: 2}
+    choiceEvent: {fileID: 11400000, guid: 8d2b11866426e7b4c8461b7a20f51216, type: 2}
+    forceCombat: 1
+    goBack: 0
+  - choiceText: Retroceder
+    nextNode: {fileID: 11400000, guid: 5433e6064ee792e43b0f627208828ad4, type: 2}
+    choiceEvent: {fileID: 0}
+    forceCombat: 0
+    goBack: 1
+  onEnterEvent: {fileID: 0}

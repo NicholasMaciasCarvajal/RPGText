@@ -8,7 +8,6 @@ public class ProgressionManager : MonoBehaviour
     public ProgressionNode startingNode;
 
     private ProgressionNode currentNode;
-
     private EventResolver eventResolver;
 
     private int nodeCounter = 0;
@@ -24,7 +23,6 @@ public class ProgressionManager : MonoBehaviour
     private void Start()
     {
         eventResolver = FindFirstObjectByType<EventResolver>();
-
         EnterNode(startingNode);
     }
 
@@ -38,10 +36,10 @@ public class ProgressionManager : MonoBehaviour
         Debug.Log($"[PROGRESSION] Estás en nodo: {node.nodeId}");
         Debug.Log("=================================");
 
-        // Narrativa fija al entrar (si existe)
+        // Si hay narrativa fija al entrar
         if (node.entryNarrative != null)
         {
-            GameFlowManager.Instance.EnterNarrative();
+            GameFlowManager.Instance.EnterNarrative(node.entryNarrative);
         }
         else
         {
@@ -49,15 +47,13 @@ public class ProgressionManager : MonoBehaviour
         }
     }
 
-    // =================== OPCIONES DEL JUGADOR ===================
+    // =================== MOSTRAR OPCIONES ===================
 
     public void ShowOptions()
     {
         bool canGoBack = currentNode.previousNode != null;
-
         ProgressionUIController.Instance.Show(canGoBack);
     }
-
 
     // =================== ELEGIR OPCIÓN ===================
 
@@ -92,7 +88,7 @@ public class ProgressionManager : MonoBehaviour
         newNode.nodeId = "Nodo_" + nodeCounter;
         newNode.previousNode = currentNode;
 
-        // Copiar probabilidades del nodo actual (puedes variarlas después)
+        // Copiar probabilidades
         newNode.combatChance = currentNode.combatChance;
         newNode.lootChance = currentNode.lootChance;
         newNode.narrativeChance = currentNode.narrativeChance;
@@ -116,7 +112,6 @@ public class ProgressionManager : MonoBehaviour
 
         currentNode = currentNode.previousNode;
 
-        // Siempre combate
         CombatEvent combat = GameFlowManager.Instance.GetRandomCombatEvent();
         eventResolver.ResolveEvent(combat);
     }
@@ -148,7 +143,7 @@ public class ProgressionManager : MonoBehaviour
             Debug.Log("[PROGRESSION] Encuentro NARRATIVO");
 
             NarrativeNode narrative = GameFlowManager.Instance.GetRandomNarrativeNode();
-            GameFlowManager.Instance.EnterNarrative();
+            GameFlowManager.Instance.EnterNarrative(narrative);
         }
         else
         {
@@ -158,11 +153,52 @@ public class ProgressionManager : MonoBehaviour
         }
     }
 
-    // =================== CONTINUAR DESPUÉS DE EVENTO ===================
+    // =================== CALLBACK DESDE EVENTOS ===================
 
+    // Se llama al terminar combate, loot o narrativa
     public void ContinueAfterEvent()
     {
+        Debug.Log("[PROGRESSION] Continuando después del evento");
         ShowOptions();
     }
 
+    // =================== CALLBACK DESDE NARRATIVA ===================
+
+    public void ResolveNarrativeChoice(NarrativeChoiceData choice)
+    {
+        // Evento asociado a la elección
+        if (choice.choiceEvent != null)
+        {
+            eventResolver.ResolveEvent(choice.choiceEvent);
+            return;
+        }
+
+        // Forzar combate
+        if (choice.forceCombat)
+        {
+            Debug.Log("[PROGRESSION] Elección fuerza combate");
+
+            CombatEvent combat = GameFlowManager.Instance.GetRandomCombatEvent();
+            eventResolver.ResolveEvent(combat);
+            return;
+        }
+
+        // Retroceder
+        if (choice.goBack)
+        {
+            GoBack();
+            return;
+        }
+
+        // Avanzar a nodo narrativo específico
+        if (choice.nextNode != null)
+        {
+            // Si el nodo narrativo debe ser mostrado, usa EnterNarrative
+            GameFlowManager.Instance.EnterNarrative(choice.nextNode);
+            return;
+        }
+
+        // Si no hace nada especial, continuar loop
+        ContinueAfterEvent();
+    }
 }

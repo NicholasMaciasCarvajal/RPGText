@@ -46,12 +46,19 @@ public class GameFlowManager : MonoBehaviour
 
     // =================== NARRATIVA ===================
 
-    public void EnterNarrative()
+    public void EnterNarrative(NarrativeNode node)
     {
         NarrativeHUDController.Instance.Show();
-        NarrativeManager.Instance.StartNarrative();
+        GameManager.Instance.SetState(GameManager.GameState.Narrative);
+        NarrativeManager.Instance.StartNarrative(node);
     }
 
+    public void EndNarrative()
+    {
+        NarrativeHUDController.Instance.Hide();
+        GameManager.Instance.SetState(GameManager.GameState.Narrative);
+        ProgressionManager.Instance.ContinueAfterEvent();
+    }
 
     // =================== COMBATE ===================
 
@@ -100,6 +107,6 @@ public class GameFlowManager : MonoBehaviour
         Debug.Log("[FLOW] Entrando en loot");
 
         // luego implementamos loot UI
-        EnterNarrative();
+        EnterNarrative(GetRandomNarrativeNode());
     }
 }

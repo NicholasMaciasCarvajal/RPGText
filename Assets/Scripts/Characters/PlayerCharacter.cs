@@ -5,6 +5,9 @@ using UnityEngine;
 
 public class PlayerCharacter : CharacterBase
 {
+    [Header("Progression")]
+    public ExperienceSystem experienceSystem;
+
     [Header("Role")]
     public RoleData roleData;
 
@@ -25,6 +28,8 @@ public class PlayerCharacter : CharacterBase
         base.Awake();
 
         ApplyRoleData();
+
+        experienceSystem = GetComponent<ExperienceSystem>();
 
         if (equipmentManager != null)
             equipmentManager.player = this;
@@ -49,6 +54,12 @@ public class PlayerCharacter : CharacterBase
 
         currentHealth = maxHealth;
         currentEnergy = maxEnergy;
+
+        foreach (var passive in roleData.passives)
+        {
+            passive.Apply(this);
+        }
+
     }
 
     public void EnableInput(bool enable)
