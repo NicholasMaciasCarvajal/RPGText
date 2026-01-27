@@ -169,6 +169,10 @@ MonoBehaviour:
   CurrentState: 0
   player1: {fileID: 0}
   player2: {fileID: 0}
+  player1ClientId:
+    m_InternalValue: 0
+  player2ClientId:
+    m_InternalValue: 0
   turnManager: {fileID: 948668771}
   battleManager: {fileID: 1762155556}
   narrativeManager: {fileID: 1807776266}
@@ -1523,7 +1527,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  turnOrder: 000000000100000002000000
+  turnText: {fileID: 127080273}
 --- !u!114 &948668772
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1560,6 +1564,8 @@ GameObject:
   - component: {fileID: 958076399}
   - component: {fileID: 958076401}
   - component: {fileID: 958076400}
+  - component: {fileID: 958076403}
+  - component: {fileID: 958076402}
   m_Layer: 5
   m_Name: AbilitiesPanel
   m_TagString: Untagged
@@ -1583,8 +1589,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 800, y: -140}
-  m_SizeDelta: {x: -1600, y: -280}
+  m_AnchoredPosition: {x: 800, y: 250}
+  m_SizeDelta: {x: -1600, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &958076400
 MonoBehaviour:
@@ -1624,6 +1630,46 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 958076398}
   m_CullTransparentMesh: 1
+--- !u!114 &958076402
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 958076398}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 59f8146938fff824cb5fd77236b75775, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Padding:
+    m_Left: 0
+    m_Right: 0
+    m_Top: 0
+    m_Bottom: 0
+  m_ChildAlignment: 1
+  m_Spacing: 10
+  m_ChildForceExpandWidth: 0
+  m_ChildForceExpandHeight: 0
+  m_ChildControlWidth: 0
+  m_ChildControlHeight: 0
+  m_ChildScaleWidth: 1
+  m_ChildScaleHeight: 1
+  m_ReverseArrangement: 0
+--- !u!114 &958076403
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 958076398}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3245ec927659c4140ac4f8d17403cc18, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_HorizontalFit: 0
+  m_VerticalFit: 2
 --- !u!1 &1119188103
 GameObject:
   m_ObjectHideFlags: 0

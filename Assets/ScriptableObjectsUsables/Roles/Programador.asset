@@ -15,10 +15,12 @@ MonoBehaviour:
   roleName: Programador
   description: Programa cosas programables
   bonusHealth: 100
-  bonusEnergy: 15
+  bonusEnergy: 50
   bonusAttack: 5
   bonusDefense: 15
   initialAbilities:
   - {fileID: 11400000, guid: f7f6cd9900374ce478406d605fa5d079, type: 2}
+  - {fileID: 11400000, guid: a5de2ab7c01e73140bc8d000633f5c94, type: 2}
+  - {fileID: 11400000, guid: 5d9268272c47f3b43bd2a8ca54a72ccb, type: 2}
   passives:
   - {fileID: 11400000, guid: 0ce2b156aafc44a4796499540400d39b, type: 2}

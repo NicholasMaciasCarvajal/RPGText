@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.UI;
 using static NetworkBattleManager;
 
 public class TurnManager : NetworkBehaviour
@@ -26,6 +27,9 @@ public class TurnManager : NetworkBehaviour
 
     private NetworkVariable<int> currentTurnIndex =
         new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
+    [Header("Turn")]
+    public Text turnText;
 
     public TurnOwner CurrentTurnO => (TurnOwner)currentTurnIndex.Value;
 
@@ -233,6 +237,8 @@ public class TurnManager : NetworkBehaviour
         // AHORA SÍ ES MI TURNO
 
         CombatHUDController.Instance.SetTurnText("Tu turno");
+
+        turnText.text = "Turno de " + currentTurn.ToString();
 
         localController.ResetTurnInput();
 

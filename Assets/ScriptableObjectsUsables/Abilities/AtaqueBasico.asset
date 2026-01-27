@@ -17,6 +17,6 @@ MonoBehaviour:
   hitChance: 90
   energyCost: 1
   abilityType: 0
-  basePower: 5
+  basePower: 3
   statusEffect: {fileID: 0}
   targetSelf: 0

@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   abilityName: AtaqueFuerte
   description: Ataque Fuerte
-  hitChance: 90
+  hitChance: 100
   energyCost: 5
   abilityType: 0
-  basePower: 10
+  basePower: 20
   statusEffect: {fileID: 0}
   targetSelf: 0

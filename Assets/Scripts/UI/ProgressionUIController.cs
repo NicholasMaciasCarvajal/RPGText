@@ -20,7 +20,7 @@ public class ProgressionUIController : MonoBehaviour
 
     private void Start()
     {
-        Hide();
+        //Hide();
     }
 
     // =================== MOSTRAR OPCIONES ===================
