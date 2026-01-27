@@ -22,6 +22,8 @@ public class GameManager : NetworkBehaviour
     [Header("Player References")]
     public PlayerCharacter player1;
     public PlayerCharacter player2;
+    public NetworkVariable<ulong> player1ClientId = new NetworkVariable<ulong>();
+    public NetworkVariable<ulong> player2ClientId = new NetworkVariable<ulong>();
 
     [Header("Managers")]
     public TurnManager turnManager;
@@ -44,13 +46,6 @@ public class GameManager : NetworkBehaviour
     private void Start()
     {
         SetState(GameState.Narrative);
-    }
-
-    public override void OnNetworkSpawn()
-    {
-        if (!IsServer) return;
-
-        AssignPlayers();
     }
 
     public void SetState(GameState newState)
@@ -79,32 +74,69 @@ public class GameManager : NetworkBehaviour
         SetState(GameState.Narrative);
     }
 
+    public override void OnNetworkSpawn()
+    {
+        if (!IsServer) return;
+
+        NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
+    }
+
     public void LoadScene(string sceneName)
     {
         SceneManager.LoadScene(sceneName);
     }
 
-    private void AssignPlayers()
+    private System.Collections.IEnumerator AssignPlayerAfterSpawn(ulong clientId)
     {
-        var players = FindObjectsOfType<PlayerCharacter>();
+        // Esperar a que el PlayerObject exista realmente
+        yield return new WaitUntil(() =>
+            NetworkManager.Singleton.ConnectedClients.ContainsKey(clientId) &&
+            NetworkManager.Singleton.ConnectedClients[clientId].PlayerObject != null
+        );
 
-        if (players.Length >= 1)
-            player1 = players[0];
+        var playerObj = NetworkManager.Singleton.ConnectedClients[clientId].PlayerObject;
+        var player = playerObj.GetComponent<PlayerCharacter>();
 
-        if (players.Length >= 2)
-            player2 = players[1];
+        if (player == null)
+        {
+            Debug.LogError("[GAME] PlayerObject no tiene PlayerCharacter");
+            yield break;
+        }
 
-        Debug.Log("[GAME] Jugadores asignados");
+        if (player1 == null)
+        {
+            player1 = player;
+            player1ClientId.Value = clientId;
+            Debug.Log($"[GAME] Player 1 asignado (Client {clientId})");
+        }
+        else if (player2 == null)
+        {
+            player2 = player;
+            player2ClientId.Value = clientId;
+            Debug.Log($"[GAME] Player 2 asignado (Client {clientId})");
+        }
+        else
+        {
+            Debug.LogWarning("[GAME] Ya hay 2 jugadores registrados.");
+            yield break;
+        }
 
-        // si ya están los dos, iniciar tutorial
+        // Si ya están los dos, iniciar tutorial
         if (player1 != null && player2 != null)
         {
             StartTutorialCombat();
         }
     }
 
+    private void OnClientConnected(ulong clientId)
+    {
+        StartCoroutine(AssignPlayerAfterSpawn(clientId));
+    }
+
     private void StartTutorialCombat()
     {
+        if (!IsServer) return;
+
         Debug.Log("[GAME] Iniciando combate tutorial");
 
         var eventResolver = FindFirstObjectByType<EventResolver>();
@@ -114,4 +146,5 @@ public class GameManager : NetworkBehaviour
             eventResolver.ResolveEvent(tutorialCombat);
         }
     }
+
 }

@@ -12,11 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d4a5b843977df484e8bc306a9db04132, type: 3}
   m_Name: Ability1
   m_EditorClassIdentifier: 
-  abilityName: Sexxooooooooooo
-  description: Tienes sexo duro con el rival
-  hitChance: 100
-  energyCost: 50
+  abilityName: AtaqueFuerte
+  description: Ataque Fuerte
+  hitChance: 90
+  energyCost: 5
   abilityType: 0
-  basePower: 5
-  statusEffect: {fileID: 11400000, guid: 4709e96c35ab5174ba5e75249f44927e, type: 2}
+  basePower: 10
+  statusEffect: {fileID: 0}
   targetSelf: 0

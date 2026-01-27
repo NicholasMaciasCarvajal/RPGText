@@ -1,8 +1,9 @@
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
-public class EnemyCharacter : CharacterBase
+public class EnemyCharacter : CharacterBase, IPointerClickHandler
 {
     [Header("Enemy AI")]
     public List<Ability> abilities = new List<Ability>();
@@ -36,6 +37,14 @@ public class EnemyCharacter : CharacterBase
         }
 
         UseRandomAbility(target);
+    }
+
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        if (TargetSelectionController.Instance != null)
+        {
+            TargetSelectionController.Instance.SelectTarget(this);
+        }
     }
 
     private void BasicAttack(PlayerCharacter target)

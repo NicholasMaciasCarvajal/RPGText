@@ -4,6 +4,9 @@ public class EventResolver : MonoBehaviour
 {
     public void ResolveEvent(GameEvent gameEvent)
     {
+        if (!Unity.Netcode.NetworkManager.Singleton.IsServer)
+            return;
+
         Debug.Log($"[EVENT] Resolviendo evento: {gameEvent.eventName}");
         ProgressionUIController.Instance.Hide();
 
@@ -22,15 +25,13 @@ public class EventResolver : MonoBehaviour
                 break;
 
             case GameEvent.EventType.Narrative:
-                // Solución: obtener un nodo narrativo aleatorio y pasarlo como argumento
-                GameFlowManager.Instance.EnterNarrative(GameFlowManager.Instance.GetRandomNarrativeNode());
-                break;
-
-            default:
-                Debug.LogWarning("Tipo de evento desconocido");
+                GameFlowManager.Instance.EnterNarrative(
+                    GameFlowManager.Instance.GetRandomNarrativeNode());
                 break;
         }
     }
+
+
     private void ResolveCombat(CombatEvent combatEvent)
     {
         GameFlowManager.Instance.EnterCombat(combatEvent);

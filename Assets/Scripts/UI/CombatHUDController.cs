@@ -4,7 +4,6 @@ using System.Collections.Generic;
 
 public class CombatHUDController : MonoBehaviour
 {
-    public static CombatHUDController Instance;
 
     [Header("Turn")]
     public Text turnText;
@@ -19,6 +18,8 @@ public class CombatHUDController : MonoBehaviour
     [Header("Abilities")]
     public Transform abilitiesPanel;
     public GameObject abilityButtonPrefab;
+
+    public static CombatHUDController Instance;
 
     private void Awake()
     {

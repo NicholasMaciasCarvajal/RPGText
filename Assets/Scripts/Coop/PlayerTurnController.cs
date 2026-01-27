@@ -32,20 +32,34 @@ public class PlayerTurnController : NetworkBehaviour
     // llamado por BattleInputController
     public void SendAbilityChoice(int abilityIndex)
     {
-        if (!IsOwner) return;
-        if (!player.CanAct()) return;
+        Debug.Log("[CLIENT] SendAbilityChoice llamado");
+
+        if (!IsOwner)
+        {
+            Debug.LogWarning("[CLIENT] No soy Owner, ignorando input");
+            return;
+        }
+
+        if (!player.CanAct())
+        {
+            Debug.LogWarning("[CLIENT] player.CanAct() = false");
+            return;
+        }
 
         if (abilityIndex < 0 || abilityIndex >= player.abilities.Count)
+        {
+            Debug.LogWarning("[CLIENT] abilityIndex inválido");
             return;
+        }
 
         selectedAbilityIndex = abilityIndex;
 
         Debug.Log($"[CLIENT] Habilidad seleccionada: {player.abilities[abilityIndex].abilityName}");
 
-        // iniciar selección de objetivo
         TargetSelectionController.Instance
             .BeginTargetSelection(this, abilityIndex);
     }
+
 
     // (para más adelante, ítems)
     public void SendItemChoice(int itemIndex)

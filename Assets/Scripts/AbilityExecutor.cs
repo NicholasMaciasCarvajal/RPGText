@@ -20,10 +20,12 @@ public class AbilityExecutor : MonoBehaviour
             return 0;
         }
 
-        CombatLogManager.Instance.LogServer(
-            $"{caster.name} usa {ability.abilityName} en {target.name}"
-        );
-
+        if (CombatLogManager.Instance != null)
+        {
+            CombatLogManager.Instance.LogServer(
+                $"{caster.name} usa {ability.abilityName} en {target.name}"
+            );
+        }
 
         int damageDealt = 0;
 

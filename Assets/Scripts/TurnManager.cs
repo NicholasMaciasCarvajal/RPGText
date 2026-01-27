@@ -1,34 +1,39 @@
 using System.Collections.Generic;
-using UnityEngine;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Netcode;
+using UnityEngine;
+using static NetworkBattleManager;
 
 public class TurnManager : NetworkBehaviour
 {
+    public static TurnManager Instance;
+
     public enum TurnOwner
     {
-        Player1AndPlayer2,
-        Enemies
+        Player1 = 0,
+        Player2 = 1,
+        Enemies = 2
     }
 
+    private void Awake()
+    {
+        if (Instance == null)
+            Instance = this;
+        else
+            Destroy(gameObject);
+    }
 
-    [Header("Turn Order")]
-    public List<TurnOwner> turnOrder = new List<TurnOwner>();
 
     private NetworkVariable<int> currentTurnIndex =
         new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
-    public TurnOwner CurrentTurn => turnOrder[currentTurnIndex.Value];
+    public TurnOwner CurrentTurnO => (TurnOwner)currentTurnIndex.Value;
 
     private void Start()
     {
-        if (IsServer)
-        {
-            InitializeTurnsServer();
-            StartTurnServer();
-        }
-
         currentTurnIndex.OnValueChanged += OnTurnChanged;
     }
+
 
     private void OnDestroy()
     {
@@ -37,28 +42,56 @@ public class TurnManager : NetworkBehaviour
 
     // ---------------- SERVER LOGIC ----------------
 
-    private void InitializeTurnsServer()
+    /*
+    public void InitializeTurnsServer()
     {
         turnOrder.Clear();
 
-        turnOrder.Add(TurnOwner.Player1AndPlayer2);
+        if (GameManager.Instance.player1 != null)
+            turnOrder.Add(TurnOwner.Player1);
+
+        if (GameManager.Instance.player2 != null)
+            turnOrder.Add(TurnOwner.Player2);
+
         turnOrder.Add(TurnOwner.Enemies);
 
         currentTurnIndex.Value = 0;
     }
+    */
 
-
-    private void StartTurnServer()
+    public void StartBattleTurnsServer()
     {
-        Debug.Log($"[SERVER] Inicia turno: {CurrentTurn}");
+        if (!IsServer) return;
+
+        Debug.Log("[TURN] Inicializando sistema de turnos");
+
+        //InitializeTurnsServer();
+        StartTurnServer();
+    }
+
+    public void BeginBattleServer()
+    {
+        if (!IsServer) return;
+
+        currentTurnIndex.Value = 0;
+        StartTurnServer();
+    }
+
+
+
+    public void StartTurnServer()
+    {
+        Debug.Log($"[SERVER] Inicia turno: {CurrentTurnO}");
 
         var battle = FindFirstObjectByType<NetworkBattleManager>();
 
-        switch (CurrentTurn)
+        switch (CurrentTurnO)
         {
-            case TurnOwner.Player1AndPlayer2:
-                EnablePlayersSelectionClientRpc();
+            case TurnOwner.Player1:
+            case TurnOwner.Player2:
+                EnablePlayersSelectionClientRpc(CurrentTurnO);
                 break;
+
 
             case TurnOwner.Enemies:
 
@@ -75,6 +108,20 @@ public class TurnManager : NetworkBehaviour
                 break;
         }
     }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void ResetToPlayersTurnServerRpc()
+    {
+        if (!IsServer) return;
+
+        Debug.Log("[TURN] Reiniciando fase de jugadores");
+
+        currentTurnIndex.Value = 0;
+
+        StartTurnServer();
+    }
+
+
 
     private void ProcessTurnStartServer()
     {
@@ -96,18 +143,17 @@ public class TurnManager : NetworkBehaviour
     {
         if (!IsServer) return;
 
-        ProcessTurnStartServer();
-
         // aplicar OnTurnEnd al grupo actual
         var battle = FindFirstObjectByType<NetworkBattleManager>();
 
-        switch (CurrentTurn)
+        switch (CurrentTurnO)
         {
-            case TurnOwner.Player1AndPlayer2:
+            case TurnOwner.Player1:
                 GameManager.Instance.player1?.OnTurnEnd();
+                break;
+            case TurnOwner.Player2:
                 GameManager.Instance.player2?.OnTurnEnd();
                 break;
-
             case TurnOwner.Enemies:
                 foreach (var enemy in battle.enemies)
                 {
@@ -119,7 +165,7 @@ public class TurnManager : NetworkBehaviour
 
         currentTurnIndex.Value++;
 
-        if (currentTurnIndex.Value >= turnOrder.Count)
+        if (currentTurnIndex.Value > 2)
             currentTurnIndex.Value = 0;
 
         StartTurnServer();
@@ -142,27 +188,107 @@ public class TurnManager : NetworkBehaviour
 
     private void OnTurnChanged(int prev, int next)
     {
-        Debug.Log($"[CLIENT] Cambio de turno a {CurrentTurn}");
+        var newTurn = (TurnOwner)next;
+
+        Debug.Log($"[CLIENT] Cambio de turno a {newTurn}");
+
+        //  Primero: apagar UI de todos
+        DisablePlayersSelectionClientRpc();
+
+        //  Luego: activar solo al jugador correcto
+        EnablePlayersSelectionClientRpc(newTurn);
     }
 
     [ClientRpc]
-    private void EnablePlayersSelectionClientRpc()
+    private void EnablePlayersSelectionClientRpc(TurnOwner currentTurn)
     {
-        var p1 = GameManager.Instance.player1;
-        var p2 = GameManager.Instance.player2;
+        if (NetworkManager.Singleton.LocalClient.PlayerObject == null)
+            return;
 
-        p1.GetComponent<PlayerTurnController>()?.ResetTurnInput();
-        p2.GetComponent<PlayerTurnController>()?.ResetTurnInput();
-
-        CombatHUDController.Instance.SetTurnText("Turno de jugadores");
-
-        // mostrar habilidades solo al jugador local
         var localController = NetworkManager.Singleton.LocalClient.PlayerObject
             .GetComponent<PlayerTurnController>();
 
+        var localPlayer = localController.GetComponent<PlayerCharacter>();
+
+        ulong localClientId = NetworkManager.Singleton.LocalClientId;
+
+        bool isMyTurn = false;
+
+        if (currentTurn == TurnOwner.Player1 &&
+            localClientId == GameManager.Instance.player1ClientId.Value)
+        {
+            isMyTurn = true;
+        }
+        else if (currentTurn == TurnOwner.Player2 &&
+                 localClientId == GameManager.Instance.player2ClientId.Value)
+        {
+            isMyTurn = true;
+        }
+
+        Debug.Log($"[CLIENT] Checando turno. Local={localClientId} Turno={currentTurn} ¿Es mío? {isMyTurn}");
+
+        if (!isMyTurn)
+            return;
+
+        // AHORA SÍ ES MI TURNO
+
+        CombatHUDController.Instance.SetTurnText("Tu turno");
+
+        localController.ResetTurnInput();
+
         CombatHUDController.Instance.ShowAbilities(
             localController,
-            localController.GetComponent<PlayerCharacter>().abilities
+            localPlayer.abilities
         );
+
+        Debug.Log("[CLIENT] Es mi turno, UI activada");
     }
+
+
+
+    [ClientRpc]
+    private void DisablePlayersSelectionClientRpc()
+    {
+        // Ocultar habilidades en TODOS los clientes
+        CombatHUDController.Instance.HideAbilities();
+
+        // Bloquear input local si existe
+        if (NetworkManager.Singleton.LocalClient.PlayerObject != null)
+        {
+            var ctrl = NetworkManager.Singleton.LocalClient.PlayerObject
+                .GetComponent<PlayerTurnController>();
+
+            if (ctrl != null)
+                ctrl.GetComponent<PlayerCharacter>().EnableInput(false);
+        }
+
+        Debug.Log("[CLIENT] UI desactivada, esperando turno...");
+    }
+
+
+    public CharacterBase CurrentCharacter
+    {
+        get
+        {
+            switch (CurrentTurnO)
+            {
+                case TurnOwner.Player1:
+                    return GameManager.Instance.player1;
+
+                case TurnOwner.Player2:
+                    return GameManager.Instance.player2;
+
+                case TurnOwner.Enemies:
+                    var battle = FindFirstObjectByType<NetworkBattleManager>();
+                    foreach (var enemy in battle.enemies)
+                        if (enemy != null && enemy.isAlive)
+                            return enemy;
+                    return null;
+            }
+
+            return null;
+        }
+    }
+
+
 }

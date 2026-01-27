@@ -41,6 +41,7 @@ public class PlayerCharacter : CharacterBase
             netHealth.Value = currentHealth;
     }
 
+
     private void ApplyRoleData()
     {
         if (roleData == null) return;

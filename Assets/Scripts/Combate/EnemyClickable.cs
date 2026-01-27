@@ -1,6 +1,7 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 
-public class EnemyClickable : MonoBehaviour
+public class EnemyClickable : MonoBehaviour, IPointerClickHandler
 {
     private EnemyCharacter enemy;
 
@@ -9,10 +10,17 @@ public class EnemyClickable : MonoBehaviour
         enemy = GetComponent<EnemyCharacter>();
     }
 
-    private void OnMouseDown()
+    public void OnPointerClick(PointerEventData eventData)
     {
-        if (enemy == null || !enemy.isAlive)
+        Debug.Log("[ENEMY] Click detectado en enemigo");
+
+        if (enemy == null)
+        {
+            Debug.LogError("[ENEMY] EnemyCharacter es null");
             return;
+        }
+
+        Debug.Log("[ENEMY] Enviando enemigo a TargetSelectionController");
 
         TargetSelectionController.Instance.SelectTarget(enemy);
     }

@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,6 +11,7 @@ public class NetworkBattleManager : NetworkBehaviour
 {
     public EnemyCharacter[] enemies;
 
+    
     [Serializable]
     public struct QueuedAction : INetworkSerializable, IEquatable<QueuedAction>
     {
@@ -45,8 +46,9 @@ public class NetworkBattleManager : NetworkBehaviour
             return HashCode.Combine(playerClientId, abilityId, targetNetworkId, timeSubmitted);
         }
     }
+    
 
-    private NetworkList<QueuedAction> queuedActions;
+    //private NetworkList<QueuedAction> queuedActions;
 
     private TurnManager turnManager;
 
@@ -59,7 +61,7 @@ public class NetworkBattleManager : NetworkBehaviour
         else
             Destroy(gameObject);
 
-        queuedActions = new NetworkList<QueuedAction>();
+        //queuedActions = new NetworkList<QueuedAction>();
     }
 
     private void Start()
@@ -77,7 +79,13 @@ public class NetworkBattleManager : NetworkBehaviour
         ServerRpcParams rpcParams = default)
 
     {
-        if (!IsServer) return;
+        Debug.Log("[SERVER] SubmitPlayerActionServerRpc Recibido");
+
+        if (!IsServer) 
+        {
+            Debug.Log("[SERVER] ERROR: RPC llegÃ³ pero no soy un servidor");
+            return; 
+        }
 
         var clientId = rpcParams.Receive.SenderClientId;
 
@@ -91,16 +99,27 @@ public class NetworkBattleManager : NetworkBehaviour
         if (target == null || !target.isAlive)
             return;
 
+        /*
         if (!caster.CanAct())
         {
-            Debug.LogWarning("Jugador intentó actuar fuera de turno.");
+            Debug.LogWarning("Jugador intentÃ³ actuar fuera de turno.");
             return;
         }
+        */
+
+        if (TurnManager.Instance.CurrentTurnO == TurnManager.TurnOwner.Player1 &&
+            caster != GameManager.Instance.player1)
+            return;
+
+        if (TurnManager.Instance.CurrentTurnO == TurnManager.TurnOwner.Player2 &&
+            caster != GameManager.Instance.player2)
+            return;
+
 
         // evitar atacar aliados por error
         if (target is PlayerCharacter && caster is PlayerCharacter)
         {
-            Debug.LogWarning("Jugador intentó atacar aliado.");
+            Debug.LogWarning("Jugador intentÃ³ atacar aliado.");
             return;
         }
 
@@ -110,13 +129,6 @@ public class NetworkBattleManager : NetworkBehaviour
         if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.ContainsKey(targetNetworkId))
             return;
 
-        // evitar más de 1 acción por jugador
-        foreach (var qa in queuedActions)
-        {
-            if (qa.playerClientId == clientId)
-                return;
-        }
-
         var action = new QueuedAction
         {
             playerClientId = clientId,
@@ -125,47 +137,22 @@ public class NetworkBattleManager : NetworkBehaviour
             timeSubmitted = NetworkManager.ServerTime.Time
         };
 
-        queuedActions.Add(action);
-
-        // cuando ya tenemos 2, resolvemos
-        if (queuedActions.Count >= 2)
+        // ejecutar acciÃ³n inmediatamente
+        ExecuteQueuedActionServer(new QueuedAction
         {
-            ResolvePlayersPhaseServer();
-        }
+            playerClientId = clientId,
+            abilityId = abilityId,
+            targetNetworkId = targetNetworkId,
+            timeSubmitted = NetworkManager.ServerTime.Time
+        });
+
+        // cerrar turno inmediatamente
+        Debug.Log("[SERVER] AcciÃ³n ejecutada, terminando turno");
+        turnManager.EndTurnServer();
+
     }
 
     // =================== RESOLVER JUGADORES ===================
-
-    private void ResolvePlayersPhaseServer()
-    {
-        if (!IsServer) return;
-
-        Debug.Log("[SERVER] Resolviendo fase de jugadores…");
-
-        // copiar manualmente a lista normal
-        List<QueuedAction> ordered = new List<QueuedAction>();
-
-        foreach (var qa in queuedActions)
-        {
-            ordered.Add(qa);
-        }
-
-        // ordenar por timestamp
-        ordered.Sort((a, b) => a.timeSubmitted.CompareTo(b.timeSubmitted));
-
-        foreach (var action in ordered)
-        {
-            ExecuteQueuedActionServer(action);
-        }
-
-        queuedActions.Clear();
-
-        CombatHUDController.Instance.HideAbilities();
-
-        // avanzar turno
-        turnManager.EndTurnServer();
-    }
-
 
     private void ExecuteQueuedActionServer(QueuedAction action)
     {
@@ -208,9 +195,9 @@ public class NetworkBattleManager : NetworkBehaviour
         var target = NetworkManager.Singleton.SpawnManager.SpawnedObjects[targetId]
             .GetComponent<CharacterBase>();
 
-        Debug.Log($"{caster.name} ejecutó habilidad {abilityIndex} sobre {target.name}");
+        Debug.Log($"{caster.name} ejecutÃ³ habilidad {abilityIndex} sobre {target.name}");
 
-        // aquí puedes:
+        // aquÃ­ puedes:
         // reproducir animaciones
         // actualizar UI
         // mostrar texto flotante
@@ -225,7 +212,7 @@ public class NetworkBattleManager : NetworkBehaviour
         
         CombatHUDController.Instance.SetTurnText("Turno de enemigos");
 
-        Debug.Log("[SERVER] Resolviendo turno de enemigos…");
+        Debug.Log("[SERVER] Resolviendo turno de enemigosâ€¦");
 
         StartCoroutine(EnemiesTurnRoutine());
     }
@@ -238,8 +225,10 @@ public class NetworkBattleManager : NetworkBehaviour
 
             ExecuteEnemyAction(enemy);
         }
+        // Termina turno de enemigos â†’ vuelve al sistema normal
+        Debug.Log("[SERVER] Fin turno enemigos");
+        turnManager.EndTurnServer();
 
-        GameManager.Instance.turnManager.EndTurnServer();
     }
 
     private void ExecuteEnemyAction(EnemyCharacter enemy)
@@ -256,7 +245,7 @@ public class NetworkBattleManager : NetworkBehaviour
             return;
         }
 
-        // si no tiene habilidades, ataque básico
+        // si no tiene habilidades, ataque bÃ¡sico
         if (enemy.abilities.Count == 0)
         {
             int damage = enemy.attack;
@@ -264,7 +253,7 @@ public class NetworkBattleManager : NetworkBehaviour
 
             CheckBattleEnd();
 
-            Debug.Log($"Enemy {enemy.name} hizo ataque básico a {target.name} por {damage}");
+            Debug.Log($"Enemy {enemy.name} hizo ataque bÃ¡sico a {target.name} por {damage}");
             return;
         }
 
@@ -276,17 +265,23 @@ public class NetworkBattleManager : NetworkBehaviour
 
         if (Random.value > hitChance)
         {
-            Debug.Log($"Enemy {enemy.name} falló {ability.abilityName} contra {target.name}");
+            Debug.Log($"Enemy {enemy.name} fallÃ³ {ability.abilityName} contra {target.name}");
             return;
         }
 
-        // ejecutar habilidad real (con energía, efectos, estados, etc.)
+        // ejecutar habilidad real (con energÃ­a, efectos, estados, etc.)
         AbilityExecutor.ExecuteAbility(enemy, target, ability);
 
         CheckBattleEnd();
 
-        Debug.Log($"Enemy {enemy.name} usó {ability.abilityName} contra {target.name}");
+        Debug.Log($"Enemy {enemy.name} usÃ³ {ability.abilityName} contra {target.name}");
     }
+
+    private Vector3 GetEnemySpawnPosition()
+    {
+        return new Vector3(Random.Range(-2f, 2f), 0, Random.Range(2f, 4f));
+    }
+
 
     public void StartBattle(CombatEvent combatEvent)
     {
@@ -294,11 +289,27 @@ public class NetworkBattleManager : NetworkBehaviour
 
         Debug.Log("[BATTLE] Iniciando combate desde evento");
 
-        // Conversión explícita de CharacterBase[] a EnemyCharacter[]
-        enemies = combatEvent.enemies.Cast<EnemyCharacter>().ToArray();
+        List<EnemyCharacter> spawnedEnemies = new List<EnemyCharacter>();
+
+        foreach (var enemyPrefab in combatEvent.enemies)
+        {
+            // Instanciar enemigo
+            var enemyInstanceObj = Instantiate(enemyPrefab, GetEnemySpawnPosition(), Quaternion.identity);
+
+            // Spawnear en red
+            var netObj = enemyInstanceObj.GetComponent<NetworkObject>();
+            netObj.Spawn();
+
+            // Asegurarse de que el tipo es EnemyCharacter
+            var enemyInstance = enemyInstanceObj.GetComponent<EnemyCharacter>();
+            spawnedEnemies.Add(enemyInstance);
+        }
+
+        enemies = spawnedEnemies.ToArray();
 
         turnManager = FindFirstObjectByType<TurnManager>();
-        turnManager.EndTurnServer(); // inicia turno
+
+        turnManager.BeginBattleServer();
     }
 
 

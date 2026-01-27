@@ -4,8 +4,9 @@ public class TargetSelectionController : MonoBehaviour
 {
     public static TargetSelectionController Instance;
 
-    private PlayerTurnController localTurnController;
-    private int pendingAbilityIndex = -1;
+    private PlayerTurnController currentController;
+    private int currentAbilityIndex;
+    private bool selecting = false;
 
     private void Awake()
     {
@@ -15,33 +16,39 @@ public class TargetSelectionController : MonoBehaviour
             Destroy(gameObject);
     }
 
-    // llamado cuando el jugador elige habilidad
+    // llamado desde PlayerTurnController cuando eliges habilidad
     public void BeginTargetSelection(PlayerTurnController controller, int abilityIndex)
     {
-        localTurnController = controller;
-        pendingAbilityIndex = abilityIndex;
+        currentController = controller;
+        currentAbilityIndex = abilityIndex;
+        selecting = true;
 
-        Debug.Log("[CLIENT] Selecciona un objetivo…");
-
-        // aquí luego:
-        // - activar highlights en enemigos
-        // - cambiar cursor
+        Debug.Log("[TARGET] Selecciona un enemigo haciendo click");
     }
 
-    // llamado cuando haces click en un enemigo
+    // llamado desde EnemyClickable
     public void SelectTarget(EnemyCharacter enemy)
     {
-        if (localTurnController == null) return;
-        if (enemy == null || !enemy.isAlive) return;
+        if (!selecting)
+        {
+            Debug.LogWarning("[TARGET] No estaba en modo selección");
+            return;
+        }
 
-        localTurnController
-            .SubmitAbilityWithTarget(pendingAbilityIndex, enemy);
+        if (currentController == null)
+        {
+            Debug.LogError("[TARGET] currentController es NULL — no hay jugador activo");
+            return;
+        }
 
-        // limpiar estado
-        localTurnController = null;
-        pendingAbilityIndex = -1;
+        Debug.Log($"[TARGET] Objetivo seleccionado: {enemy.name}");
 
-        // aquí luego:
-        // - quitar highlights
+        selecting = false;
+
+        // AQUÍ ESTABA TU BUG
+        currentController.SubmitAbilityWithTarget(currentAbilityIndex, enemy);
+
+        // limpiar
+        currentController = null;
     }
 }

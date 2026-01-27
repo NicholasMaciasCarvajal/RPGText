@@ -1,3 +1,4 @@
+using Unity.Netcode;
 using UnityEngine;
 using static GameManager;
 
@@ -5,11 +6,11 @@ public enum GameState
 {
     Narrative,
     Combat,
-    Loot
+    Loot,
+    Progression
 }
 
-
-public class GameFlowManager : MonoBehaviour
+public class GameFlowManager : NetworkBehaviour
 {
     public static GameFlowManager Instance;
 
@@ -48,15 +49,21 @@ public class GameFlowManager : MonoBehaviour
 
     public void EnterNarrative(NarrativeNode node)
     {
+        if (!IsServer) return;
+
+        currentState = GameState.Narrative;
+
         NarrativeHUDController.Instance.Show();
-        GameManager.Instance.SetState(GameManager.GameState.Narrative);
         NarrativeManager.Instance.StartNarrative(node);
     }
 
     public void EndNarrative()
     {
+        if (!IsServer) return;
+
+        currentState = GameState.Progression;
+
         NarrativeHUDController.Instance.Hide();
-        GameManager.Instance.SetState(GameManager.GameState.Narrative);
         ProgressionManager.Instance.ContinueAfterEvent();
     }
 
@@ -64,22 +71,38 @@ public class GameFlowManager : MonoBehaviour
 
     public void EnterCombat(CombatEvent combatEvent)
     {
-        NarrativeHUDController.Instance.Hide();
-
-        currentState = GameState.Combat;
+        if (!NetworkManager.Singleton.IsServer)
+            return;
 
         Debug.Log("[FLOW] Entrando en combate");
 
-        NetworkBattleManager.Instance.StartBattle(combatEvent);
+        if (NarrativeHUDController.Instance == null)
+            Debug.LogError("[FLOW] NarrativeHUDController.Instance es NULL");
+
+        if (NetworkBattleManager.Instance == null)
+            Debug.LogError("[FLOW] NetworkBattleManager.Instance es NULL");
+
+        if (NarrativeHUDController.Instance != null)
+            NarrativeHUDController.Instance.Hide();
+
+        currentState = GameState.Combat;
+
+        if (NetworkBattleManager.Instance != null)
+            NetworkBattleManager.Instance.StartBattle(combatEvent);
     }
+
 
     public void EndCombatVictory()
     {
+        if (!IsServer) return;
+
         Debug.Log("[FLOW] Combate ganado");
 
+        currentState = GameState.Progression;
         ProgressionManager.Instance.ContinueAfterEvent();
     }
 
+    /*
     internal void EnterRandomCombat(CombatEvent combatEvent)
     {
         NarrativeHUDController.Instance.Hide();
@@ -90,9 +113,12 @@ public class GameFlowManager : MonoBehaviour
 
         NetworkBattleManager.Instance.StartBattle(combatEvent);
     }
+    */
 
     public void EndCombatDefeat()
     {
+        if (!IsServer) return;
+
         Debug.Log("[FLOW] Combate perdido");
 
         // Game over o nodo especial
@@ -102,11 +128,13 @@ public class GameFlowManager : MonoBehaviour
 
     public void EnterLoot()
     {
+        if (!IsServer) return;
+
         currentState = GameState.Loot;
 
         Debug.Log("[FLOW] Entrando en loot");
 
-        // luego implementamos loot UI
+        // temporal: pasar a narrativa
         EnterNarrative(GetRandomNarrativeNode());
     }
 }
