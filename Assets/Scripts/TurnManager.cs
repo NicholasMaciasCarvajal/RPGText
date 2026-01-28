@@ -236,6 +236,8 @@ public class TurnManager : NetworkBehaviour
 
         // AHORA SÍ ES MI TURNO
 
+        RecargarEnergiaServerRpc(currentTurn);
+
         CombatHUDController.Instance.SetTurnText("Tu turno");
 
         turnText.text = "Turno de " + currentTurn.ToString();
@@ -250,6 +252,30 @@ public class TurnManager : NetworkBehaviour
         Debug.Log("[CLIENT] Es mi turno, UI activada");
     }
 
+    [ServerRpc(RequireOwnership = false)]
+    private void RecargarEnergiaServerRpc(TurnOwner currentTurn)
+    {
+        switch (currentTurn)
+        {
+            case TurnOwner.Player1:
+                RecargarEnergiaP1();
+                break;
+
+            case TurnOwner.Player2:
+                RecargarEnergiaP2();
+                break;
+        }
+    }
+
+    private void RecargarEnergiaP1()
+    {
+        GameManager.Instance.RecargarEnergiaP1();
+    }
+
+    private void RecargarEnergiaP2()
+    {
+        GameManager.Instance.RecargarEnergiaP2();
+    }
 
 
     [ClientRpc]

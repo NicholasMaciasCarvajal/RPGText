@@ -147,4 +147,15 @@ public class GameManager : NetworkBehaviour
         }
     }
 
+    public void RecargarEnergiaP1()
+    {
+        Debug.Log("Recargando 3 de Energia");
+        player1.currentEnergy = player1.currentEnergy + 3;
+    }
+
+    public void RecargarEnergiaP2()
+    {
+        Debug.Log("Recargando 3 de Energia");
+        player2.currentEnergy = player2.currentEnergy + 3;
+    }
 }

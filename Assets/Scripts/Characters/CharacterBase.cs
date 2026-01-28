@@ -72,6 +72,7 @@ public abstract class CharacterBase : NetworkBehaviour
     {
         isAlive = false;
         Debug.Log($"{name} ha muerto.");
+        Destroy(gameObject);
     }
 
     public void AddStatusEffect(StatusEffect effect)

@@ -324,6 +324,7 @@ public class NetworkBattleManager : NetworkBehaviour
         {
             GiveExperienceToPlayers();
             GameFlowManager.Instance.EndCombatVictory();
+            DestroyEnemyPrefab();
         }
         else if (!playersAlive)
         {
@@ -365,5 +366,20 @@ public class NetworkBattleManager : NetworkBehaviour
         Debug.Log($"[XP] Cada jugador gana {totalXP} XP");
     }
 
+    private void DestroyEnemyPrefab()
+    {
+        if (enemies == null) return;
+
+        foreach (EnemyCharacter obj in enemies)
+        {
+            if (obj != null)
+            {
+                Destroy(obj);
+            }
+        }
+
+        enemies = null;
+
+    }
 
 }

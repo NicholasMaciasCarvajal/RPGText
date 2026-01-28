@@ -17,4 +17,4 @@ MonoBehaviour:
   combatChance: 0.5
   lootChance: 0.3
   narrativeChance: 0.2
-  entryNarrative: {fileID: 0}
+  entryNarrative: {fileID: 11400000, guid: c4d9fa03d75fcdf4bafccd2a3f7ef1cd, type: 2}
