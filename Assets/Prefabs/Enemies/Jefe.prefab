@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: 4113519649199287125}
   - component: {fileID: -971566541410100480}
   m_Layer: 0
-  m_Name: Enemy1
+  m_Name: Jefe
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -81,7 +81,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 100
   m_Sprite: {fileID: -2413806693520163455, guid: 4adeaf2d2b1c7417e89f026626d8264f, type: 3}
-  m_Color: {r: 1, g: 0, b: 0, a: 1}
+  m_Color: {r: 0.78005505, g: 0, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -115,7 +115,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 2580553067
+  GlobalObjectIdHash: 3486081999
   InScenePlacedSourceGlobalObjectIdHash: 2580553067
   DeferredDespawnTick: 0
   Ownership: 1
@@ -141,11 +141,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  maxHealth: 100
+  maxHealth: 200
   maxEnergy: 50
-  attack: 1
-  defense: 2
-  currentHealth: 100
+  attack: 5
+  defense: 0
+  currentHealth: 200
   currentEnergy: 50
   isAlive: 1
   abilities:

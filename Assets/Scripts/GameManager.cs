@@ -1,4 +1,5 @@
 using Unity.Netcode;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -157,5 +158,11 @@ public class GameManager : NetworkBehaviour
     {
         Debug.Log("Recargando 3 de Energia");
         player2.currentEnergy = player2.currentEnergy + 3;
+    }
+
+    public void SetPlayersPosition()
+    {
+        player1.transform.position = new Vector3(-1.5f, -2.5f, 0);
+        player2.transform.position = new Vector3(1.5f, -2.5f, 0);
     }
 }

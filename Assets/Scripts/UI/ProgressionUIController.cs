@@ -18,11 +18,6 @@ public class ProgressionUIController : MonoBehaviour
             Destroy(gameObject);
     }
 
-    private void Start()
-    {
-        //Hide();
-    }
-
     // =================== MOSTRAR OPCIONES ===================
 
     public void Show(bool canGoBack)

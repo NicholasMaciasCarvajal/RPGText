@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b9a8ef434b6a5ee4cbd29feacf38448a, type: 3}
+  m_Name: NN3
+  m_EditorClassIdentifier: 
+  narrativeText: "Seguiste las peque\xF1as luces, eran de un monstro"
+  choices:
+  - choiceText: Comenzar combate con el Jefe
+    nextNode: {fileID: 0}
+    choiceEvent: {fileID: 11400000, guid: 5e4d3ed46361c7c408318d2a2ddb1dbe, type: 2}
+    forceCombat: 1
+    goBack: 0
+  backgroundImage: {fileID: 21300000, guid: f129c93f96f96a145a3c851fb39ecb68, type: 3}
+  onEnterEvent: {fileID: 11400000, guid: 5e4d3ed46361c7c408318d2a2ddb1dbe, type: 2}

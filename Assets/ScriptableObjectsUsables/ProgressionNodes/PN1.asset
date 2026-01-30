@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bc0173e0a19ecc44188e36fb4fc366fc, type: 3}
-  m_Name: Combate
+  m_Name: PN1
   m_EditorClassIdentifier: 
-  nodeId: combate
-  previousNode: {fileID: 11400000, guid: 24b7a93e5f139324dadcf915ddcf78e8, type: 2}
+  nodeId: PostComTuto
+  previousNode: {fileID: 0}
   combatChance: 0
   lootChance: 0
   narrativeChance: 1

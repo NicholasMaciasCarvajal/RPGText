@@ -1,5 +1,6 @@
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.UI;
 using static GameManager;
 
 public enum GameState
@@ -24,6 +25,9 @@ public class GameFlowManager : NetworkBehaviour
             Destroy(gameObject);
     }
 
+    [Header("Fondo")]
+    public SpriteRenderer fondo;
+
     [Header("Pools de eventos")]
     public CombatEvent[] possibleCombats;
     public GameEvent[] possibleLootEvents;
@@ -46,6 +50,11 @@ public class GameFlowManager : NetworkBehaviour
 
 
     // =================== NARRATIVA ===================
+    private void Update()
+    {
+        Debug.Log("Estado del juego: " + currentState);
+    }
+
 
     public void EnterNarrative(NarrativeNode node)
     {
@@ -53,8 +62,15 @@ public class GameFlowManager : NetworkBehaviour
 
         currentState = GameState.Narrative;
 
+
+        SetBackGround(node);
         NarrativeHUDController.Instance.Show();
         NarrativeManager.Instance.StartNarrative(node);
+    }
+
+    public void SetBackGround(NarrativeNode node)
+    {
+        fondo.sprite = node.backgroundImage;
     }
 
     public void EndNarrative()
@@ -88,7 +104,10 @@ public class GameFlowManager : NetworkBehaviour
         currentState = GameState.Combat;
 
         if (NetworkBattleManager.Instance != null)
+        {
             NetworkBattleManager.Instance.StartBattle(combatEvent);
+            GameManager.Instance.SetPlayersPosition();
+        }
     }
 
 
